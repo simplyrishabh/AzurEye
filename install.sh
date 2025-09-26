@@ -18,9 +18,65 @@ fi
 
 # Check if Azure CLI is installed
 if ! command -v az &> /dev/null; then
-    echo "❌ Azure CLI is not installed. Please install Azure CLI 2.0 or higher."
-    echo "   Visit: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli"
-    exit 1
+    echo "❌ Azure CLI is not installed. Installing Azure CLI..."
+    
+    # Detect OS and install Azure CLI
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS
+        echo "🍎 Detected macOS. Installing Azure CLI via Homebrew..."
+        
+        # Check if Homebrew is installed
+        if ! command -v brew &> /dev/null; then
+            echo "📦 Installing Homebrew..."
+            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+            
+            # Add Homebrew to PATH for current session
+            if [[ -f "/opt/homebrew/bin/brew" ]]; then
+                eval "$(/opt/homebrew/bin/brew shellenv)"
+            elif [[ -f "/usr/local/bin/brew" ]]; then
+                eval "$(/usr/local/bin/brew shellenv)"
+            fi
+        fi
+        
+        # Install Azure CLI
+        brew install azure-cli
+        
+    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        # Linux
+        echo "🐧 Detected Linux. Installing Azure CLI..."
+        
+        # Check if apt is available (Ubuntu/Debian)
+        if command -v apt-get &> /dev/null; then
+            echo "📦 Installing Azure CLI via apt..."
+            curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+        # Check if dnf is available (RHEL/CentOS/Fedora)
+        elif command -v dnf &> /dev/null; then
+            echo "📦 Installing Azure CLI via dnf..."
+            sudo dnf install -y azure-cli
+        # Check if yum is available (older RHEL/CentOS)
+        elif command -v yum &> /dev/null; then
+            echo "📦 Installing Azure CLI via yum..."
+            sudo yum install -y azure-cli
+        else
+            echo "❌ Unsupported Linux distribution. Please install Azure CLI manually."
+            echo "   Visit: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli"
+            exit 1
+        fi
+        
+    else
+        echo "❌ Unsupported operating system. Please install Azure CLI manually."
+        echo "   Visit: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli"
+        exit 1
+    fi
+    
+    # Verify installation
+    if command -v az &> /dev/null; then
+        echo "✅ Azure CLI installed successfully!"
+    else
+        echo "❌ Azure CLI installation failed. Please install manually."
+        echo "   Visit: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli"
+        exit 1
+    fi
 fi
 
 # Install Python dependencies

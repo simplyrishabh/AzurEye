@@ -31,6 +31,38 @@ AzurEye is a Flask-based web application that performs automated security assess
 - Azure CLI 2.0 or higher
 - Internet connection for Azure API calls
 
+### Installing Azure CLI
+
+#### macOS
+```bash
+# Install Homebrew (if not already installed)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Install Azure CLI
+brew install azure-cli
+```
+
+#### Linux (Ubuntu/Debian)
+```bash
+# Update package index
+sudo apt-get update
+
+# Install Azure CLI
+curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+```
+
+#### Linux (RHEL/CentOS/Fedora)
+```bash
+# Install Azure CLI
+sudo dnf install azure-cli
+```
+
+#### Windows
+```bash
+# Download and run the MSI installer
+# Visit: https://aka.ms/installazurecliwindows
+```
+
 ### Azure Authentication
 ```bash
 # Login to Azure
