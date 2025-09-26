@@ -1,0 +1,877 @@
+{% extends "base.html" %}
+{% block title %}Visual Data - Interactive Vulnerability Graph{% endblock %}
+{% block content %}
+<div class="min-h-screen bg-gray-900 text-white">
+    <!-- Header -->
+    <div class="bg-gray-800 border-b border-gray-700 p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-cyan-400 mb-2">
+                    <i class="fas fa-project-diagram mr-3"></i>Interactive Vulnerability Graph
+                </h1>
+                <p class="text-gray-300">Explore your Azure security findings through an interactive hierarchical visualization</p>
+            </div>
+            <div class="flex space-x-3">
+                <button id="auto-layout" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center">
+                    <i class="fas fa-magic mr-2"></i> Auto Layout
+                </button>
+                <button id="expand-all" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center">
+                    <i class="fas fa-expand-arrows-alt mr-2"></i> Expand All
+                </button>
+                <button id="reset-canvas" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center">
+                    <i class="fas fa-redo mr-2"></i> Reset
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="bg-gray-800 border-b border-gray-700 p-4">
+        <div class="flex flex-wrap items-center gap-4">
+            <span class="text-sm font-medium text-gray-300">Hierarchy Legend:</span>
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-cloud text-blue-500 text-lg"></i>
+                <span class="text-sm text-gray-300">Azure Cloud</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <i class="fab fa-microsoft text-green-500 text-lg"></i>
+                <span class="text-sm text-gray-300">Subscription</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-folder text-yellow-500 text-lg"></i>
+                <span class="text-sm text-gray-300">Resource Group</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-cog text-purple-500 text-lg"></i>
+                <span class="text-sm text-gray-300">Service Type</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-server text-red-500 text-lg"></i>
+                <span class="text-sm text-gray-300">Resource</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-exclamation-triangle text-orange-500 text-lg"></i>
+                <span class="text-sm text-gray-300">Vulnerability</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Graph Container -->
+    <div id="graph-container" class="relative w-full h-screen bg-gray-900">
+        <svg id="graph-svg" class="w-full h-full"></svg>
+        
+        <!-- Fullscreen Toggle -->
+        <button id="fullscreen-toggle" class="absolute top-4 right-4 bg-gray-700 hover:bg-gray-600 text-white p-2 rounded-lg transition duration-200">
+            <i class="fas fa-expand"></i>
+        </button>
+    </div>
+
+    <!-- Fullscreen Graph Modal -->
+    <div id="fullscreen-graph" class="fixed inset-0 bg-gray-900 z-50 hidden">
+        <div class="flex flex-col h-full">
+            <!-- Fullscreen Header -->
+            <div class="bg-gray-800 border-b border-gray-700 p-4 flex items-center justify-between">
+                <h2 class="text-xl font-bold text-cyan-400">Fullscreen Vulnerability Graph</h2>
+                <button id="close-fullscreen" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition duration-200">
+                    <i class="fas fa-times mr-2"></i>Close
+                </button>
+            </div>
+            
+            <!-- Fullscreen Graph -->
+            <div class="flex-1 relative">
+                <svg id="fullscreen-svg" class="w-full h-full"></svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vulnerability Details Modal -->
+    <div id="vulnerability-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden overflow-y-auto">
+        <div class="min-h-full flex items-center justify-center p-4">
+            <div class="bg-gray-800 rounded-lg max-w-6xl w-full my-8 overflow-hidden">
+                <!-- Fixed Header -->
+                <div class="flex items-center justify-between p-6 border-b border-gray-700 sticky top-0 bg-gray-800 z-10">
+                    <h3 class="text-2xl font-bold text-cyan-400">Vulnerability Details</h3>
+                    <button id="close-modal" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition duration-200">
+                        <i class="fas fa-times mr-2"></i>Close
+                    </button>
+                </div>
+                <!-- Content -->
+                <div class="p-6 max-h-96 overflow-y-auto">
+                    <div id="modal-content" class="text-gray-300 break-words">
+                        <!-- Content will be populated by JavaScript -->
+                    </div>
+                </div>
+                <!-- Scroll to Top Button -->
+                <button id="scroll-to-top" class="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg transition duration-200 opacity-0 pointer-events-none z-20">
+                    <i class="fas fa-arrow-up"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+    // Global variables
+    let treeData = { nodes: [], links: [] };
+    let fullscreenSimulation = null;
+    let simulation;
+    let svg, g, link, node;
+    let nodeId = 0;
+    
+    // Initialize the visualization
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeGraph();
+        createTreeData();
+        renderGraph();
+        setupEventListeners();
+    });
+    
+    function initializeGraph() {
+        svg = d3.select('#graph-svg');
+        g = svg.append('g');
+        
+        // Add arrow marker
+        svg.append('defs').append('marker')
+            .attr('id', 'arrowhead')
+            .attr('viewBox', '-0 -5 10 10')
+            .attr('refX', 7)
+            .attr('refY', 0)
+            .attr('orient', 'auto')
+            .attr('markerWidth', 6)
+            .attr('markerHeight', 6)
+            .append('path')
+            .attr('d', 'M 0,-3 L 6 ,0 L 0,3')
+            .attr('fill', '#94A3B8')
+            .attr('stroke', 'none');
+        
+        // Setup zoom
+        const zoom = d3.zoom()
+            .scaleExtent([0.1, 4])
+            .on('zoom', (event) => {
+                g.attr('transform', event.transform);
+            });
+        
+        svg.call(zoom);
+    }
+    
+    function createTreeData() {
+        const visualData = {{ visual_data | tojson }};
+        
+        if (!visualData || Object.keys(visualData).length === 0) {
+            // Show empty state
+            g.append('text')
+                .attr('x', 400)
+                .attr('y', 300)
+                .attr('text-anchor', 'middle')
+                .attr('fill', '#94A3B8')
+                .attr('font-size', '18px')
+                .text('No vulnerability data available. Run some scans to see the visualization.');
+            return;
+        }
+        
+        // Create root node
+        const rootNode = {
+            id: `root-${nodeId++}`,
+            name: 'Azure Security Findings',
+            type: 'root',
+            level: 0
+        };
+        treeData.nodes.push(rootNode);
+        
+        // Group by subscription -> resource group -> service type -> resource -> vulnerability
+        const subscriptions = {};
+        Object.entries(visualData).forEach(([serviceType, serviceData]) => {
+            Object.entries(serviceData.resources).forEach(([resourceKey, resource]) => {
+                const subId = resource.subscription_id;
+                const rgName = resource.resource_group;
+                
+                // Create subscription node
+                if (!subscriptions[subId]) {
+                    subscriptions[subId] = {
+                        id: `sub-${nodeId++}`,
+                        name: `Subscription: ${subId.substring(0, 8)}...`,
+                        type: 'subscription',
+                        level: 1,
+                        subscription_id: subId,
+                        resourceGroups: {}
+                    };
+                    treeData.nodes.push(subscriptions[subId]);
+                    treeData.links.push({ source: rootNode.id, target: subscriptions[subId].id });
+                }
+                
+                // Create resource group node
+                if (!subscriptions[subId].resourceGroups[rgName]) {
+                    subscriptions[subId].resourceGroups[rgName] = {
+                        id: `rg-${nodeId++}`,
+                        name: `Resource Group: ${rgName}`,
+                        type: 'resource_group',
+                        level: 2,
+                        subscription_id: subId,
+                        resource_group: rgName,
+                        services: {}
+                    };
+                    treeData.nodes.push(subscriptions[subId].resourceGroups[rgName]);
+                    treeData.links.push({ 
+                        source: subscriptions[subId].id, 
+                        target: subscriptions[subId].resourceGroups[rgName].id 
+                    });
+                }
+                
+                // Create service type node
+                if (!subscriptions[subId].resourceGroups[rgName].services[serviceType]) {
+                    subscriptions[subId].resourceGroups[rgName].services[serviceType] = {
+                        id: `service-${nodeId++}`,
+                        name: serviceType,
+                        type: 'service',
+                        level: 3,
+                        data: serviceData,
+                        subscription_id: subId,
+                        resource_group: rgName
+                    };
+                    treeData.nodes.push(subscriptions[subId].resourceGroups[rgName].services[serviceType]);
+                    treeData.links.push({ 
+                        source: subscriptions[subId].resourceGroups[rgName].id, 
+                        target: subscriptions[subId].resourceGroups[rgName].services[serviceType].id 
+                    });
+                }
+                
+        // Add resource node
+        const resourceNode = {
+            id: `resource-${nodeId++}`,
+            name: resource.service_name,
+            type: 'resource',
+            level: 4,
+            vulnerabilityCount: resource.vulnerability_count,
+            categories: resource.categories,
+            subscription_id: subId,
+            resource_group: resource.resource_group,
+            serviceType: serviceType
+        };
+        treeData.nodes.push(resourceNode);
+                treeData.links.push({ 
+                    source: subscriptions[subId].resourceGroups[rgName].services[serviceType].id, 
+                    target: resourceNode.id 
+                });
+                
+                // Add vulnerability category nodes
+                resource.categories.forEach(category => {
+                    const vulnNode = {
+                        id: `vuln-${nodeId++}`,
+                        name: category,
+                        type: 'vulnerability',
+                        level: 5,
+                        parent: resourceNode.id,
+                        category: category
+                    };
+                    treeData.nodes.push(vulnNode);
+                    treeData.links.push({ source: resourceNode.id, target: vulnNode.id });
+                });
+            });
+        });
+        
+    }
+    
+    function renderFullscreenGraph() {
+        if (treeData.nodes.length === 0) return;
+        
+        const fullscreenSvg = d3.select('#fullscreen-svg');
+        fullscreenSvg.selectAll('*').remove();
+        
+        const fullscreenG = fullscreenSvg.append('g');
+        
+        // Add arrow marker for fullscreen
+        fullscreenSvg.append('defs').append('marker')
+            .attr('id', 'fullscreen-arrowhead')
+            .attr('viewBox', '-0 -5 10 10')
+            .attr('refX', 7)
+            .attr('refY', 0)
+            .attr('orient', 'auto')
+            .attr('markerWidth', 6)
+            .attr('markerHeight', 6)
+            .append('path')
+            .attr('d', 'M 0,-3 L 6 ,0 L 0,3')
+            .attr('fill', '#94A3B8')
+            .attr('stroke', 'none');
+        
+        // Setup zoom for fullscreen
+        const fullscreenZoom = d3.zoom()
+            .scaleExtent([0.1, 4])
+            .on('zoom', (event) => {
+                fullscreenG.attr('transform', event.transform);
+            });
+        
+        fullscreenSvg.call(fullscreenZoom);
+        
+        // Create links for fullscreen
+        const fullscreenLink = fullscreenG.append('g')
+            .attr('class', 'links')
+            .selectAll('line')
+            .data(treeData.links)
+            .enter().append('line')
+            .attr('stroke', '#94A3B8')
+            .attr('stroke-width', 2)
+            .attr('stroke-opacity', 0.7)
+            .attr('marker-end', 'url(#fullscreen-arrowhead)')
+            .style('cursor', 'pointer')
+            .on('mouseover', function() {
+                d3.select(this)
+                    .attr('stroke', '#E5E7EB')
+                    .attr('stroke-width', 3)
+                    .attr('stroke-opacity', 0.9);
+            })
+            .on('mouseout', function() {
+                d3.select(this)
+                    .attr('stroke', '#94A3B8')
+                    .attr('stroke-width', 2)
+                    .attr('stroke-opacity', 0.7);
+            });
+        
+        // Create nodes for fullscreen
+        const fullscreenNode = fullscreenG.append('g')
+            .attr('class', 'nodes')
+            .selectAll('g')
+            .data(treeData.nodes)
+            .enter().append('g')
+            .attr('class', 'node')
+            .style('cursor', 'pointer')
+            .call(d3.drag()
+                .on('start', fullscreenDragstarted)
+                .on('drag', fullscreenDragged)
+                .on('end', fullscreenDragended));
+        
+        // Add node icons for fullscreen
+        fullscreenNode.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('dy', '0.35em')
+            .attr('font-family', 'FontAwesome')
+            .attr('font-size', d => getNodeIconSize(d))
+            .attr('fill', d => getNodeColor(d))
+            .text(d => getNodeIcon(d));
+        
+        // Add node labels for fullscreen
+        fullscreenNode.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('dy', d => {
+                const iconSize = parseInt(getNodeIconSize(d).replace('px', ''));
+                return iconSize * 0.6 + 25;
+            })
+            .attr('font-size', '12px')
+            .attr('fill', '#E5E7EB')
+            .text(d => d.name.length > 20 ? d.name.substring(0, 17) + '...' : d.name);
+        
+        // Add click handlers for fullscreen
+        fullscreenNode.on('click', function(event, d) {
+            showNodeDetails(d);
+        });
+        
+        // Setup simulation for fullscreen
+        fullscreenSimulation = d3.forceSimulation(treeData.nodes)
+            .force('link', d3.forceLink(treeData.links).id(d => d.id).distance(100))
+            .force('charge', d3.forceManyBody().strength(-300))
+            .force('center', d3.forceCenter(window.innerWidth / 2, window.innerHeight / 2))
+            .on('tick', function() {
+                fullscreenLink
+                    .attr('x1', d => {
+                        const dx = d.target.x - d.source.x;
+                        const dy = d.target.y - d.source.y;
+                        const length = Math.sqrt(dx * dx + dy * dy);
+                        if (length === 0) return d.source.x;
+                        const iconSize = parseInt(getNodeIconSize(d.source).replace('px', ''));
+                        const offset = iconSize * 0.4;
+                        return d.source.x + (dx / length) * offset;
+                    })
+                    .attr('y1', d => {
+                        const dx = d.target.x - d.source.x;
+                        const dy = d.target.y - d.source.y;
+                        const length = Math.sqrt(dx * dx + dy * dy);
+                        if (length === 0) return d.source.y;
+                        const iconSize = parseInt(getNodeIconSize(d.source).replace('px', ''));
+                        const offset = iconSize * 0.4;
+                        return d.source.y + (dy / length) * offset;
+                    })
+                    .attr('x2', d => {
+                        const dx = d.target.x - d.source.x;
+                        const dy = d.target.y - d.source.y;
+                        const length = Math.sqrt(dx * dx + dy * dy);
+                        if (length === 0) return d.target.x;
+                        const iconSize = parseInt(getNodeIconSize(d.target).replace('px', ''));
+                        const offset = iconSize * 0.4;
+                        return d.target.x - (dx / length) * offset;
+                    })
+                    .attr('y2', d => {
+                        const dx = d.target.x - d.source.x;
+                        const dy = d.target.y - d.source.y;
+                        const length = Math.sqrt(dx * dx + dy * dy);
+                        if (length === 0) return d.target.y;
+                        const iconSize = parseInt(getNodeIconSize(d.target).replace('px', ''));
+                        const offset = iconSize * 0.4;
+                        return d.target.y - (dy / length) * offset;
+                    });
+
+                fullscreenNode.attr('transform', d => `translate(${d.x},${d.y})`);
+            });
+    }
+
+    function renderGraph() {
+        if (treeData.nodes.length === 0) return;
+        
+        // Clear existing elements
+        g.selectAll('*').remove();
+        
+        // Create links
+        link = g.append('g')
+            .attr('class', 'links')
+            .selectAll('line')
+            .data(treeData.links)
+            .enter().append('line')
+            .attr('stroke', '#94A3B8')
+            .attr('stroke-width', 2)
+            .attr('stroke-opacity', 0.7)
+            .attr('marker-end', 'url(#arrowhead)')
+            .style('cursor', 'pointer')
+            .on('mouseover', function() {
+                d3.select(this)
+                    .attr('stroke', '#E5E7EB')
+                    .attr('stroke-width', 3)
+                    .attr('stroke-opacity', 0.9);
+            })
+            .on('mouseout', function() {
+                d3.select(this)
+                    .attr('stroke', '#94A3B8')
+                    .attr('stroke-width', 2)
+                    .attr('stroke-opacity', 0.7);
+            });
+        
+        // Create nodes
+        node = g.append('g')
+            .attr('class', 'nodes')
+            .selectAll('g')
+            .data(treeData.nodes)
+            .enter().append('g')
+            .attr('class', 'node')
+            .style('cursor', 'pointer')
+            .call(d3.drag()
+                .on('start', dragstarted)
+                .on('drag', dragged)
+                .on('end', dragended));
+        
+        // Add node icons (no circles, just icons)
+        node.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('dy', '0.35em')
+            .attr('font-family', 'FontAwesome')
+            .attr('font-size', d => getNodeIconSize(d))
+            .attr('fill', d => getNodeColor(d))
+            .text(d => getNodeIcon(d));
+        
+        // Add node labels
+        node.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('dy', d => {
+                const iconSize = parseInt(getNodeIconSize(d).replace('px', ''));
+                return iconSize * 0.6 + 25;
+            })
+            .attr('font-size', '12px')
+            .attr('fill', '#E5E7EB')
+            .text(d => d.name.length > 20 ? d.name.substring(0, 17) + '...' : d.name);
+        
+        // Add click handlers
+        node.on('click', function(event, d) {
+            showNodeDetails(d);
+        });
+        
+        // Setup simulation
+        simulation = d3.forceSimulation(treeData.nodes)
+            .force('link', d3.forceLink(treeData.links).id(d => d.id).distance(100))
+            .force('charge', d3.forceManyBody().strength(-300))
+            .force('center', d3.forceCenter(400, 300))
+            .on('tick', ticked);
+    }
+    
+    function getNodeRadius(d) {
+        switch(d.type) {
+            case 'root': return 60;
+            case 'subscription': return 50;
+            case 'resource_group': return 40;
+            case 'service': return 35;
+            case 'resource': return 30;
+            case 'vulnerability': return 20;
+            default: return 25;
+        }
+    }
+    
+    function getNodeColor(d) {
+        switch(d.type) {
+            case 'root': return '#3B82F6'; // Blue
+            case 'subscription': return '#10B981'; // Green
+            case 'resource_group': return '#F59E0B'; // Yellow
+            case 'service': return '#8B5CF6'; // Purple
+            case 'resource': return '#EF4444'; // Red
+            case 'vulnerability': return '#F97316'; // Orange
+            default: return '#6B7280'; // Gray
+        }
+    }
+    
+    function getNodeIcon(d) {
+        switch(d.type) {
+            case 'root': return '\uf0e8'; // Cloud icon
+            case 'subscription': return '\uf1b2'; // Azure icon
+            case 'resource_group': return '\uf07b'; // Folder icon
+            case 'service': 
+                // Service type specific icons
+                switch(d.name) {
+                    case 'Automation Account': return '\uf085'; // Cog icon
+                    case 'Logic App Consumption': return '\uf0e7'; // Bolt icon
+                    case 'Logic App Standard': return '\uf0e7'; // Bolt icon
+                    case 'Function App': return '\uf1b0'; // Code icon
+                    case 'Key Vault': return '\uf023'; // Lock icon
+                    case 'Storage Account': return '\uf1c0'; // Database icon
+                    default: return '\uf085'; // Default cog icon
+                }
+            case 'resource': 
+                // Resource specific icons based on service type
+                if (d.serviceType) {
+                    switch(d.serviceType) {
+                        case 'Automation Account': return '\uf085'; // Cog icon
+                        case 'Logic App Consumption': return '\uf0e7'; // Bolt icon
+                        case 'Logic App Standard': return '\uf0e7'; // Bolt icon
+                        case 'Function App': return '\uf1b0'; // Code icon
+                        case 'Key Vault': return '\uf023'; // Lock icon
+                        case 'Storage Account': return '\uf1c0'; // Database icon
+                        default: return '\uf233'; // Default server icon
+                    }
+                }
+                return '\uf233'; // Default server icon
+            case 'vulnerability': return '\uf071'; // Exclamation triangle
+            default: return '\uf128'; // Question mark
+        }
+    }
+    
+    function getNodeIconSize(d) {
+        switch(d.type) {
+            case 'root': return '48px';
+            case 'subscription': return '40px';
+            case 'resource_group': return '36px';
+            case 'service': return '32px';
+            case 'resource': return '28px';
+            case 'vulnerability': return '24px';
+            default: return '28px';
+        }
+    }
+    
+    function ticked() {
+        link
+            .attr('x1', d => {
+                const dx = d.target.x - d.source.x;
+                const dy = d.target.y - d.source.y;
+                const length = Math.sqrt(dx * dx + dy * dy);
+                if (length === 0) return d.source.x;
+                const iconSize = parseInt(getNodeIconSize(d.source).replace('px', ''));
+                const offset = iconSize * 0.4; // Space from icon edge
+                return d.source.x + (dx / length) * offset;
+            })
+            .attr('y1', d => {
+                const dx = d.target.x - d.source.x;
+                const dy = d.target.y - d.source.y;
+                const length = Math.sqrt(dx * dx + dy * dy);
+                if (length === 0) return d.source.y;
+                const iconSize = parseInt(getNodeIconSize(d.source).replace('px', ''));
+                const offset = iconSize * 0.4; // Space from icon edge
+                return d.source.y + (dy / length) * offset;
+            })
+            .attr('x2', d => {
+                const dx = d.target.x - d.source.x;
+                const dy = d.target.y - d.source.y;
+                const length = Math.sqrt(dx * dx + dy * dy);
+                if (length === 0) return d.target.x;
+                const iconSize = parseInt(getNodeIconSize(d.target).replace('px', ''));
+                const offset = iconSize * 0.4; // Space from icon edge
+                return d.target.x - (dx / length) * offset;
+            })
+            .attr('y2', d => {
+                const dx = d.target.x - d.source.x;
+                const dy = d.target.y - d.source.y;
+                const length = Math.sqrt(dx * dx + dy * dy);
+                if (length === 0) return d.target.y;
+                const iconSize = parseInt(getNodeIconSize(d.target).replace('px', ''));
+                const offset = iconSize * 0.4; // Space from icon edge
+                return d.target.y - (dy / length) * offset;
+            });
+
+        node.attr('transform', d => `translate(${d.x},${d.y})`);
+    }
+    
+    function dragstarted(event, d) {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+    }
+    
+    function dragged(event, d) {
+        d.fx = event.x;
+        d.fy = event.y;
+    }
+    
+    function dragended(event, d) {
+        if (!event.active) simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+    }
+    
+    // Fullscreen drag functions
+    function fullscreenDragstarted(event, d) {
+        if (!event.active) fullscreenSimulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+    }
+    
+    function fullscreenDragged(event, d) {
+        d.fx = event.x;
+        d.fy = event.y;
+    }
+    
+    function fullscreenDragended(event, d) {
+        if (!event.active) fullscreenSimulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+    }
+    
+    function showNodeDetails(d) {
+        const modal = document.getElementById('vulnerability-modal');
+        const modalContent = document.getElementById('modal-content');
+        const visualData = {{ visual_data | tojson }};
+        
+        let html = `<div class="mb-6">
+            <h4 class="text-2xl font-bold text-cyan-400 mb-2">${d.name}</h4>
+            <div class="flex items-center space-x-4">
+                <span class="bg-gray-700 text-gray-300 px-3 py-1 rounded-full text-sm">${d.type.replace('_', ' ').toUpperCase()}</span>
+                <span class="bg-gray-700 text-gray-300 px-3 py-1 rounded-full text-sm">Level ${d.level}</span>
+            </div>
+        </div>`;
+        
+        if (d.type === 'vulnerability' && d.category) {
+            // Show specific vulnerability details
+            let vulnerabilities = [];
+            
+            // Find the parent resource to get context
+            const parentResource = treeData.nodes.find(node => node.id === d.parent);
+            
+            // Find vulnerabilities for this category, filtered by the specific resource
+            Object.entries(visualData).forEach(([serviceType, serviceData]) => {
+                // Check if the category exists (handle potential whitespace issues)
+                const categoryKey = Object.keys(serviceData.categories || {}).find(key => 
+                    key.trim() === d.category.trim()
+                );
+                
+                if (categoryKey && serviceData.categories[categoryKey]) {
+                    const categoryVulnerabilities = serviceData.categories[categoryKey].vulnerabilities || [];
+                    
+                    // Filter vulnerabilities to only show those from the specific resource
+                    if (parentResource) {
+                        const filteredVulns = categoryVulnerabilities.filter(vuln => 
+                            vuln.service_name === parentResource.name
+                        );
+                        vulnerabilities = vulnerabilities.concat(filteredVulns);
+                    } else {
+                        // Fallback: show all vulnerabilities for this category
+                        vulnerabilities = vulnerabilities.concat(categoryVulnerabilities);
+                    }
+                }
+            });
+            
+            html += `<div class="space-y-4">
+                <div class="bg-red-900 bg-opacity-30 border border-red-500 rounded-lg p-4">
+                    <h5 class="text-lg font-semibold text-red-400 mb-2">Vulnerability Category: ${d.category}</h5>
+                    <p class="text-gray-300">Found <span class="text-red-400 font-bold text-xl">${vulnerabilities.length}</span> vulnerability${vulnerabilities.length !== 1 ? 'ies' : ''}</p>
+                    ${parentResource ? `<p class="text-gray-400 text-sm mt-2">Filtered for: <span class="text-cyan-400">${parentResource.name}</span></p>` : ''}
+                </div>
+            </div>`;
+            
+            if (vulnerabilities.length > 0) {
+                html += `<div class="space-y-4">`;
+                vulnerabilities.forEach((vuln, index) => {
+                    html += `
+                        <div class="bg-gray-700 rounded-lg p-6 border-l-4 border-red-500 hover:bg-gray-600 transition-colors">
+                            <div class="flex items-start justify-between mb-3">
+                                <h6 class="text-lg font-semibold text-red-400">${vuln.vulnerability_title || vuln.title || 'Security Vulnerability'}</h6>
+                                <span class="bg-red-600 text-white px-2 py-1 rounded text-xs">#${index + 1}</span>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h7 class="text-sm font-medium text-gray-300 mb-2 block">Description:</h7>
+                                <p class="text-gray-300 bg-gray-800 p-3 rounded border">${vuln.description || 'No description available'}</p>
+                            </div>
+                            
+                            ${vuln.code_snippet ? `
+                            <div class="mb-4">
+                                <h7 class="text-sm font-medium text-red-400 mb-2 block">Found Code/Value:</h7>
+                                <div class="bg-red-900 bg-opacity-30 border border-red-500 p-3 rounded">
+                                    <code class="text-red-200 text-sm font-mono break-all">${vuln.code_snippet}</code>
+                                </div>
+                            </div>
+                            ` : ''}
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                <div class="bg-gray-800 p-3 rounded">
+                                    <h7 class="text-sm font-medium text-gray-400 mb-1 block">Resource:</h7>
+                                    <p class="text-gray-300">${vuln.service_name || 'Unknown'}</p>
+                                </div>
+                                <div class="bg-gray-800 p-3 rounded">
+                                    <h7 class="text-sm font-medium text-gray-400 mb-1 block">Resource Group:</h7>
+                                    <p class="text-gray-300">${vuln.resource_group || 'Unknown'}</p>
+                                </div>
+                                <div class="bg-gray-800 p-3 rounded">
+                                    <h7 class="text-sm font-medium text-gray-400 mb-1 block">Subscription:</h7>
+                                    <p class="text-gray-300 font-mono text-xs">${vuln.subscription_id || 'Unknown'}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-blue-900 bg-opacity-30 border border-blue-500 rounded p-4">
+                                <h7 class="text-sm font-medium text-blue-400 mb-2 block">Recommendation:</h7>
+                                <p class="text-gray-300">${vuln.recommendation || 'No specific recommendation available'}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            } else {
+                html += `<div class="bg-gray-700 border border-gray-600 rounded-lg p-4">
+                    <p class="text-gray-300">No detailed vulnerability information available for this category.</p>
+                </div>`;
+            }
+        } else if (d.type === 'resource' && d.vulnerabilityCount > 0) {
+            html += `<div class="bg-yellow-900 bg-opacity-30 border border-yellow-500 rounded-lg p-4">
+                <h5 class="text-lg font-semibold text-yellow-400 mb-2">Resource Summary</h5>
+                <p class="text-gray-300">Vulnerabilities: <span class="text-red-400 font-bold text-xl">${d.vulnerabilityCount}</span></p>
+                <p class="text-gray-300 mt-2">Categories: <span class="text-yellow-400">${d.categories.join(', ')}</span></p>
+                <p class="text-gray-300 mt-2">Service Type: <span class="text-cyan-400">${d.serviceType}</span></p>
+            </div>`;
+        } else if (d.type === 'service' && d.data) {
+            html += `<div class="bg-green-900 bg-opacity-30 border border-green-500 rounded-lg p-4">
+                <h5 class="text-lg font-semibold text-green-400 mb-2">Service Type Summary</h5>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="text-center">
+                        <p class="text-2xl font-bold text-red-400">${d.data.total_vulnerabilities}</p>
+                        <p class="text-gray-300 text-sm">Total Vulnerabilities</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-2xl font-bold text-yellow-400">${Object.keys(d.data.resources).length}</p>
+                        <p class="text-gray-300 text-sm">Affected Resources</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-2xl font-bold text-blue-400">${Object.keys(d.data.categories).length}</p>
+                        <p class="text-gray-300 text-sm">Categories</p>
+                    </div>
+                </div>
+                <p class="text-gray-300 mt-4">Resource Group: <span class="text-cyan-400">${d.resource_group}</span></p>
+            </div>`;
+        } else if (d.type === 'resource_group') {
+            html += `<div class="bg-yellow-900 bg-opacity-30 border border-yellow-500 rounded-lg p-4">
+                <h5 class="text-lg font-semibold text-yellow-400 mb-2">Resource Group</h5>
+                <p class="text-gray-300">This resource group contains various Azure services and resources.</p>
+                <p class="text-gray-300 mt-2">Click on service types below to explore vulnerabilities.</p>
+                <p class="text-gray-300 mt-2">Resource Group: <span class="text-cyan-400">${d.resource_group}</span></p>
+            </div>`;
+        } else if (d.type === 'subscription') {
+            html += `<div class="bg-blue-900 bg-opacity-30 border border-blue-500 rounded-lg p-4">
+                <h5 class="text-lg font-semibold text-blue-400 mb-2">Azure Subscription</h5>
+                <p class="text-gray-300">This is your Azure subscription containing all your resources and services.</p>
+                <p class="text-gray-300 mt-2">Click on resource groups below to explore vulnerabilities.</p>
+                <p class="text-gray-300 mt-2">Subscription ID: <span class="text-cyan-400 font-mono text-sm">${d.subscription_id}</span></p>
+            </div>`;
+        } else if (d.type === 'root') {
+            html += `<div class="bg-blue-900 bg-opacity-30 border border-blue-500 rounded-lg p-4">
+                <h5 class="text-lg font-semibold text-blue-400 mb-2">Azure Security Overview</h5>
+                <p class="text-gray-300">This is the root of your Azure security hierarchy.</p>
+                <p class="text-gray-300 mt-2">Navigate through subscriptions, resource groups, and services to explore vulnerabilities.</p>
+            </div>`;
+        } else {
+            html += `<div class="bg-gray-700 border border-gray-600 rounded-lg p-4">
+                <p class="text-gray-300">No vulnerabilities found at this level.</p>
+            </div>`;
+        }
+        
+        modalContent.innerHTML = html;
+        modal.classList.remove('hidden');
+    }
+    
+    function setupEventListeners() {
+        // Auto layout
+        document.getElementById('auto-layout').addEventListener('click', function() {
+            treeData.nodes.forEach(d => {
+                d.fx = null;
+                d.fy = null;
+            });
+            simulation.alpha(0.3).restart();
+        });
+        
+        // Expand all
+        document.getElementById('expand-all').addEventListener('click', function() {
+            console.log('Expand all functionality - all nodes are already visible');
+        });
+        
+        // Reset canvas
+        document.getElementById('reset-canvas').addEventListener('click', function() {
+            location.reload();
+        });
+        
+        // Fullscreen toggle
+        document.getElementById('fullscreen-toggle').addEventListener('click', function() {
+            document.getElementById('fullscreen-graph').classList.remove('hidden');
+            // Re-render the graph in fullscreen
+            renderFullscreenGraph();
+        });
+        
+        // Close fullscreen
+        document.getElementById('close-fullscreen').addEventListener('click', function() {
+            document.getElementById('fullscreen-graph').classList.add('hidden');
+        });
+        
+        // Close modal
+        document.getElementById('close-modal').addEventListener('click', function() {
+            document.getElementById('vulnerability-modal').classList.add('hidden');
+        });
+        
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                // Close vulnerability modal if open
+                document.getElementById('vulnerability-modal').classList.add('hidden');
+                // Close fullscreen graph if open
+                document.getElementById('fullscreen-graph').classList.add('hidden');
+            }
+        });
+        
+        // Close modal when clicking outside
+        document.getElementById('vulnerability-modal').addEventListener('click', function(event) {
+            if (event.target === this) {
+                this.classList.add('hidden');
+            }
+        });
+        
+        // Close fullscreen when clicking outside
+        document.getElementById('fullscreen-graph').addEventListener('click', function(event) {
+            if (event.target === this) {
+                this.classList.add('hidden');
+            }
+        });
+        
+        // Scroll to top functionality
+        const scrollToTopBtn = document.getElementById('scroll-to-top');
+        const modal = document.getElementById('vulnerability-modal');
+        
+        modal.addEventListener('scroll', function() {
+            if (this.scrollTop > 300) {
+                scrollToTopBtn.classList.remove('opacity-0', 'pointer-events-none');
+            } else {
+                scrollToTopBtn.classList.add('opacity-0', 'pointer-events-none');
+            }
+        });
+        
+        scrollToTopBtn.addEventListener('click', function() {
+            modal.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    }
+</script>
+{% endblock %}

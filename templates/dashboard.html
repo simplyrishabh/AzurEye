@@ -1,0 +1,561 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+    <h1 class="text-3xl font-bold text-gray-300 mb-6 animate-fade-in">Dashboard</h1>
+    <div class="flex space-x-4 mb-6">
+        {% if stats.has_scans %}
+        <button id="export-html" class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-full hover:from-blue-700 hover:to-purple-700 transition duration-200 hover:shadow-lg active:scale-95 hover-scale flex items-center">
+            <i class="fas fa-file-export mr-2"></i> Export Comprehensive Security Report
+        </button>
+        {% else %}
+        <button id="export-html" class="bg-gray-500 text-gray-300 px-6 py-2 rounded-full cursor-not-allowed flex items-center" disabled title="No scans performed yet. Run some scans first to generate a report.">
+            <i class="fas fa-file-export mr-2"></i> Export Comprehensive Security Report
+        </button>
+        {% endif %}
+        <button id="reset-stats" class="bg-red-600 text-white px-6 py-2 rounded-full hover:bg-red-700 transition duration-200 hover:shadow-lg active:scale-95 hover-scale">Reset Stats</button>
+    </div>
+
+    {% if not stats.has_scans %}
+    <div class="bg-yellow-900 border border-yellow-600 rounded-lg p-4 mb-6">
+        <div class="flex items-center">
+            <i class="fas fa-info-circle text-yellow-400 mr-3 text-xl"></i>
+            <div>
+                <h3 class="text-yellow-300 font-semibold">No Scans Performed Yet</h3>
+                <p class="text-yellow-200 mt-1">Run security scans on your Azure resources to generate comprehensive reports. Navigate to the individual service modules to start scanning.</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Stats Overview -->
+    <div id="dashboard-widgets" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+        <div class="widget bg-gray-700 rounded-lg shadow-lg p-6 border-l-4 border-blue-600 hover:shadow-xl transition-shadow duration-200 flex flex-col justify-between min-h-[150px]">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-300">Subscriptions</h3>
+                <button class="toggle-widget text-gray-400 hover:text-gray-300">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+            <div class="widget-content">
+                <p id="subscriptions-count" class="text-2xl text-cyan-400">{{ stats.subscriptions }}</p>
+            </div>
+        </div>
+        <div class="widget bg-gray-700 rounded-lg shadow-lg p-6 border-l-4 border-blue-600 hover:shadow-xl transition-shadow duration-200 flex flex-col justify-between min-h-[150px]">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-300">Key Vaults Scanned</h3>
+                <button class="toggle-widget text-gray-400 hover:text-gray-300">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+            <div class="widget-content">
+                <p id="keyvaults-count" class="text-2xl text-cyan-400">{{ stats.keyvaults }}</p>
+                <p class="text-gray-400">With Findings: <span id="keyvaults-findings" class="text-red-600">{{ stats.keyvaults_findings }}</span></p>
+            </div>
+        </div>
+        <div class="widget bg-gray-700 rounded-lg shadow-lg p-6 border-l-4 border-blue-600 hover:shadow-xl transition-shadow duration-200 flex flex-col justify-between min-h-[150px]">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-300">Storage Accounts Scanned</h3>
+                <button class="toggle-widget text-gray-400 hover:text-gray-300">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+            <div class="widget-content">
+                <p id="storage-count" class="text-2xl text-cyan-400">{{ stats.storage }}</p>
+                <p class="text-gray-400">With Findings: <span id="storage-findings" class="text-red-600">{{ stats.storage_findings }}</span></p>
+            </div>
+        </div>
+        <div class="widget bg-gray-700 rounded-lg shadow-lg p-6 border-l-4 border-blue-600 hover:shadow-xl transition-shadow duration-200 flex flex-col justify-between min-h-[150px]">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-300">Logic Apps (Standard) Scanned</h3>
+                <button class="toggle-widget text-gray-400 hover:text-gray-300">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+            <div class="widget-content">
+                <p id="logicapps-count" class="text-2xl text-cyan-400">{{ stats.logicapps }}</p>
+                <p class="text-gray-400">With Findings: <span id="logicapps-findings" class="text-red-600">{{ stats.logicapps_findings }}</span></p>
+            </div>
+        </div>
+        <div class="widget bg-gray-700 rounded-lg shadow-lg p-6 border-l-4 border-blue-600 hover:shadow-xl transition-shadow duration-200 flex flex-col justify-between min-h-[150px]">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-300">Logic Apps (Cons.) Scanned</h3>
+                <button class="toggle-widget text-gray-400 hover:text-gray-300">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+            <div class="widget-content">
+                <p id="logicapps-consumption-count" class="text-2xl text-cyan-400">{{ stats.logicapps_consumption }}</p>
+                <p class="text-gray-400">With Findings: <span id="logicapps-consumption-findings" class="text-red-600">{{ stats.logicapps_consumption_findings }}</span></p>
+            </div>
+        </div>
+        <div class="widget bg-gray-700 rounded-lg shadow-lg p-6 border-l-4 border-blue-600 hover:shadow-xl transition-shadow duration-200 flex flex-col justify-between min-h-[150px]">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-300">Function Apps Scanned</h3>
+                <button class="toggle-widget text-gray-400 hover:text-gray-300">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+            <div class="widget-content">
+                <p id="functionapps-count" class="text-2xl text-cyan-400">{{ stats.functionapps }}</p>
+                <p class="text-gray-400">With Findings: <span id="functionapps-findings" class="text-red-600">{{ stats.functionapps_findings }}</span></p>
+            </div>
+        </div>
+        <div class="widget bg-gray-700 rounded-lg shadow-lg p-6 border-l-4 border-blue-600 hover:shadow-xl transition-shadow duration-200 flex flex-col justify-between min-h-[150px]">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-300">Automation Accounts Scanned</h3>
+                <button class="toggle-widget text-gray-400 hover:text-gray-300">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+            <div class="widget-content">
+                <p id="automationaccounts-count" class="text-2xl text-cyan-400">{{ stats.automationaccounts }}</p>
+                <p class="text-gray-400">With Findings: <span id="automationaccounts-findings" class="text-red-600">{{ stats.automationaccounts_findings }}</span></p>
+            </div>
+        </div>
+        <div class="widget bg-gray-700 rounded-lg shadow-lg p-6 border-l-4 border-blue-600 hover:shadow-xl transition-shadow duration-200 col-span-1 sm:col-span-2 lg:col-span-3">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-300">Services Scanned</h3>
+                <button class="toggle-widget text-gray-400 hover:text-gray-300">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+            <div class="widget-content">
+                <canvas id="scanned-chart" height="200" class="w-full mx-auto"></canvas>
+            </div>
+        </div>
+        <div class="widget bg-gray-700 rounded-lg shadow-lg p-6 border-l-4 border-blue-600 hover:shadow-xl transition-shadow duration-200 col-span-1 sm:col-span-2 lg:col-span-3">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-300">Findings Overview</h3>
+                <button class="toggle-widget text-gray-400 hover:text-gray-300">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+            <div class="widget-content">
+                <canvas id="findings-chart" height="200" class="w-full mx-auto"></canvas>
+            </div>
+        </div>
+        <div class="widget bg-gray-700 rounded-lg shadow-lg p-6 border-l-4 border-blue-600 hover:shadow-xl transition-shadow duration-200 col-span-1 sm:col-span-2 lg:col-span-3">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-300">Resource Distribution by Subscription</h3>
+                <button class="toggle-widget text-gray-400 hover:text-gray-300">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+            <div class="widget-content">
+                <canvas id="distribution-chart" height="200" class="w-full mx-auto"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow-lg hidden animate-slide-in"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dragula@3.7.3/dist/dragula.min.js"></script>
+    <script>
+        // Initialize stats and scan_stats from server-rendered data
+        let stats = {
+            subscriptions: {{ stats.subscriptions }},
+            keyvaults: {{ stats.keyvaults }},
+            storage: {{ stats.storage }},
+            logicapps: {{ stats.logicapps }},
+            logicapps_consumption: {{ stats.logicapps_consumption }},
+            functionapps: {{ stats.functionapps }},
+            automationaccounts: {{ stats.automationaccounts | default(0) }},
+            keyvaults_findings: {{ stats.keyvaults_findings }},
+            storage_findings: {{ stats.storage_findings }},
+            logicapps_findings: {{ stats.logicapps_findings }},
+            logicapps_consumption_findings: {{ stats.logicapps_consumption_findings }},
+            functionapps_findings: {{ stats.functionapps_findings }},
+            automationaccounts_findings: {{ stats.automationaccounts_findings | default(0) }}
+        };
+        window.scan_stats = {
+            scanned: {
+                "Key Vault": {{ scan_stats.scanned['Key Vault'] }},
+                "Storage Account": {{ scan_stats.scanned['Storage Account'] }},
+                "Logic App Standard": {{ scan_stats.scanned['Logic App Standard'] }},
+                "Logic App Consumption": {{ scan_stats.scanned['Logic App Consumption'] }},
+                "Function App": {{ scan_stats.scanned['Function App'] }},
+                "Automation Account": {{ scan_stats.scanned['Automation Account'] | default(0) }}
+            },
+            findings: {
+                "Key Vault": {{ scan_stats.findings['Key Vault'] }},
+                "Storage Account": {{ scan_stats.findings['Storage Account'] }},
+                "Logic App Standard": {{ scan_stats.findings['Logic App Standard'] }},
+                "Logic App Consumption": {{ scan_stats.findings['Logic App Consumption'] }},
+                "Function App": {{ scan_stats.findings['Function App'] }},
+                "Automation Account": {{ scan_stats.findings['Automation Account'] | default(0) }}
+            }
+        };
+        window.resource_distribution = {{ resource_distribution | tojson }};
+
+        // Store Chart.js instances globally
+        window.scannedChart = null;
+        window.findingsChart = null;
+        window.distributionChart = null;
+
+        function updateStats(stats) {
+            document.getElementById('subscriptions-count').textContent = stats.subscriptions || '0';
+            document.getElementById('keyvaults-count').textContent = stats.keyvaults || '0';
+            document.getElementById('storage-count').textContent = stats.storage || '0';
+            document.getElementById('logicapps-count').textContent = stats.logicapps || '0';
+            document.getElementById('logicapps-consumption-count').textContent = stats.logicapps_consumption || '0';
+            document.getElementById('functionapps-count').textContent = stats.functionapps || '0';
+            document.getElementById('automationaccounts-count').textContent = stats.automationaccounts || '0';
+            document.getElementById('keyvaults-findings').textContent = stats.keyvaults_findings || '0';
+            document.getElementById('storage-findings').textContent = stats.storage_findings || '0';
+            document.getElementById('logicapps-findings').textContent = stats.logicapps_findings || '0';
+            document.getElementById('logicapps-consumption-findings').textContent = stats.logicapps_consumption_findings || '0';
+            document.getElementById('functionapps-findings').textContent = stats.functionapps_findings || '0';
+            document.getElementById('automationaccounts-findings').textContent = stats.automationaccounts_findings || '0';
+        }
+
+        window.initCharts = function() {
+            console.log("Initializing charts...");
+            updateCharts(window.scan_stats, window.resource_distribution);
+        };
+
+        window.updateCharts = function(scan_stats, resource_distribution) {
+            console.log("Updating charts...");
+            // Destroy existing charts if they exist
+            if (window.scannedChart) {
+                window.scannedChart.destroy();
+                window.scannedChart = null;
+            }
+            if (window.findingsChart) {
+                window.findingsChart.destroy();
+                window.findingsChart = null;
+            }
+            if (window.distributionChart) {
+                window.distributionChart.destroy();
+                window.distributionChart = null;
+            }
+
+            const chartUrls = {
+                'Key Vaults': '/key_vaults',
+                'Storage Accounts': '/storage_accounts',
+                'Logic Apps (Standard)': '/logic_app_standard',
+                'Logic Apps (Cons.)': '/logic_app_consumption',
+                'Function Apps': '/function_app',
+                'Automation Accounts': '/automation'
+            };
+
+            // Services Scanned Chart
+            const scannedChartCanvas = document.getElementById('scanned-chart');
+            if (scannedChartCanvas.offsetWidth === 0 || scannedChartCanvas.offsetHeight === 0) {
+                console.log("Scanned chart canvas has zero size, skipping initialization...");
+                return;
+            }
+            window.scannedChart = new Chart(scannedChartCanvas, {
+                type: 'bar',
+                data: {
+                    labels: ['Key Vaults', 'Storage Accounts', 'Logic Apps (Standard)', 'Logic Apps (Cons.)', 'Function Apps', 'Automation Accounts'],
+                    datasets: [{
+                        label: 'Services Scanned',
+                        data: [
+                            scan_stats.scanned['Key Vault'] || 0,
+                            scan_stats.scanned['Storage Account'] || 0,
+                            scan_stats.scanned['Logic App Standard'] || 0,
+                            scan_stats.scanned['Logic App Consumption'] || 0,
+                            scan_stats.scanned['Function App'] || 0,
+                            scan_stats.scanned['Automation Account'] || 0
+                        ],
+                        backgroundColor: ['#00BCD4', '#10B981', '#F59E0B', '#8B5CF6', '#EF4444', '#6B7280'],
+                        borderColor: ['#00ACC1', '#059669', '#D97706', '#7C3AED', '#B91C1C', '#4B5563'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#E0E0E0' },
+                            grid: { color: '#4B5EAA' }
+                        },
+                        x: {
+                            ticks: { color: '#E0E0E0' },
+                            grid: { color: '#4B5EAA' }
+                        }
+                    },
+                    plugins: {
+                        legend: { labels: { color: '#E0E0E0' } },
+                        tooltip: {
+                            enabled: true,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    label += context.parsed.y;
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            const label = window.scannedChart.data.labels[index];
+                            const url = chartUrls[label];
+                            if (url) {
+                                window.location.href = url;
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Findings Overview Chart
+            const findingsChartCanvas = document.getElementById('findings-chart');
+            if (findingsChartCanvas.offsetWidth === 0 || findingsChartCanvas.offsetHeight === 0) {
+                console.log("Findings chart canvas has zero size, skipping initialization...");
+                return;
+            }
+            window.findingsChart = new Chart(findingsChartCanvas, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Key Vaults', 'Storage Accounts', 'Logic Apps (Standard)', 'Logic Apps (Cons.)', 'Function Apps', 'Automation Accounts'],
+                    datasets: [{
+                        label: 'Findings',
+                        data: [
+                            scan_stats.findings['Key Vault'] || 0,
+                            scan_stats.findings['Storage Account'] || 0,
+                            scan_stats.findings['Logic App Standard'] || 0,
+                            scan_stats.findings['Logic App Consumption'] || 0,
+                            scan_stats.findings['Function App'] || 0,
+                            scan_stats.findings['Automation Account'] || 0
+                        ],
+                        backgroundColor: ['#EF4444', '#F59E0B', '#D97706', '#8B5CF6', '#00BCD4', '#6B7280'],
+                        borderColor: ['#B91C1C', '#D97706', '#B45309', '#7C3AED', '#00ACC1', '#4B5563'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#E0E0E0' } },
+                        tooltip: {
+                            enabled: true,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    label += context.parsed;
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            const label = window.findingsChart.data.labels[index];
+                            const url = chartUrls[label];
+                            if (url) {
+                                window.location.href = url;
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Resource Distribution by Subscription Chart
+            const distributionChartCanvas = document.getElementById('distribution-chart');
+            if (distributionChartCanvas.offsetWidth === 0 || distributionChartCanvas.offsetHeight === 0) {
+                console.log("Distribution chart canvas has zero size, skipping initialization...");
+                return;
+            }
+            window.distributionChart = new Chart(distributionChartCanvas, {
+                type: 'pie',
+                data: {
+                    labels: resource_distribution.labels,
+                    datasets: [{
+                        label: 'Resources',
+                        data: resource_distribution.data,
+                        backgroundColor: resource_distribution.backgroundColors,
+                        borderColor: resource_distribution.borderColors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#E0E0E0' } },
+                        tooltip: {
+                            enabled: true,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    label += context.parsed;
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            const subscriptionName = resource_distribution.labels[index];
+                            console.log(`Clicked on subscription: ${subscriptionName}`);
+                        }
+                    }
+                }
+            });
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3000);
+        }
+
+        // Initial render of stats
+        updateStats(stats);
+
+        // Export to HTML on button click
+        document.getElementById('export-html').addEventListener('click', function() {
+            console.log("Export Comprehensive Security Report button clicked");
+            
+            // Check if button is disabled (no scans performed)
+            if (this.disabled) {
+                showToast('No scans performed yet. Run some scans first to generate a report.', 'warning');
+                return;
+            }
+            
+            // Show loading state
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Generating Report...';
+            this.disabled = true;
+            
+            fetch('/export_dashboard_to_html', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.status === 'success') {
+                    showToast('Comprehensive Security Report Generated!');
+                    console.log(`Report saved as: ${result.filename}`);
+                    
+                    // Create download link
+                    const a = document.createElement('a');
+                    a.href = `/reports/${result.filename}`;
+                    a.download = result.filename;
+                    a.target = '_blank';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                } else {
+                    showToast('Export Failed: ' + result.message);
+                }
+            })
+            .catch(err => {
+                console.error('Error exporting report:', err);
+                showToast('Export Failed: ' + err.message);
+            })
+            .finally(() => {
+                // Restore button state
+                this.innerHTML = originalText;
+                this.disabled = false;
+            });
+        });
+
+        // Reset stats on button click with confirmation
+        document.getElementById('reset-stats').addEventListener('click', () => {
+            console.log("Reset Stats button clicked");
+            if (confirm('Warning: This will delete all scan data and stats from the database. Are you sure you want to proceed?')) {
+                fetch('/reset_database', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        stats = {
+                            subscriptions: stats.subscriptions,
+                            keyvaults: 0,
+                            storage: 0,
+                            logicapps: 0,
+                            logicapps_consumption: 0,
+                            functionapps: 0,
+                            automationaccounts: 0,
+                            keyvaults_findings: 0,
+                            storage_findings: 0,
+                            logicapps_findings: 0,
+                            logicapps_consumption_findings: 0,
+                            functionapps_findings: 0,
+                            automationaccounts_findings: 0
+                        };
+                        window.scan_stats = {
+                            scanned: {
+                                "Key Vault": 0,
+                                "Storage Account": 0,
+                                "Logic App Standard": 0,
+                                "Logic App Consumption": 0,
+                                "Function App": 0,
+                                "Automation Account": 0
+                            },
+                            findings: {
+                                "Key Vault": 0,
+                                "Storage Account": 0,
+                                "Logic App Standard": 0,
+                                "Logic App Consumption": 0,
+                                "Function App": 0,
+                                "Automation Account": 0
+                            }
+                        };
+                        window.resource_distribution = {
+                            labels: [],
+                            data: [],
+                            backgroundColors: [],
+                            borderColors: []
+                        };
+                        updateStats(stats);
+                        updateCharts(window.scan_stats, window.resource_distribution);
+                        showToast('Stats Reset Successfully!');
+                    } else {
+                        showToast('Error resetting stats: ' + data.message);
+                    }
+                })
+                .catch(err => {
+                    console.error('Error resetting stats:', err);
+                    showToast('Error resetting stats. Please try again.');
+                });
+            } else {
+                console.log("Reset Stats cancelled by user");
+            }
+        });
+
+        // Make widgets draggable
+        dragula([document.getElementById('dashboard-widgets')], {
+            moves: function (el, source, handle, sibling) {
+                return handle.classList.contains('widget');
+            }
+        });
+
+        // Toggle widget content visibility
+        document.querySelectorAll('.toggle-widget').forEach(button => {
+            button.addEventListener('click', () => {
+                const content = button.parentElement.nextElementSibling;
+                content.classList.toggle('hidden');
+                const icon = button.querySelector('i');
+                icon.classList.toggle('fa-chevron-down');
+                icon.classList.toggle('fa-chevron-up');
+                // Resize charts after toggling visibility
+                setTimeout(() => {
+                    window.resizeCharts();
+                }, 300);
+            });
+        });
+    </script>
+{% endblock %}

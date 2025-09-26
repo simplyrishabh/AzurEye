@@ -1,0 +1,481 @@
+{% extends "base.html" %}
+{% block title %}Function App{% endblock %}
+{% block content %}
+<style>
+    /* Fix overflow issues in Function App results */
+    .tab-content {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        max-width: 100%;
+    }
+    
+    .tab-content ul {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        max-width: 100%;
+    }
+    
+    .tab-content li {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        max-width: 100%;
+        white-space: pre-wrap;
+    }
+    
+    .bg-gray-600 {
+        overflow: hidden;
+    }
+    
+    .border-l-4 {
+        overflow: hidden;
+    }
+    
+    /* Ensure long text doesn't break layout */
+    .text-gray-300, .text-gray-400, .text-red-600, .text-green-600 {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+    
+    /* Fix for long app names and resource groups */
+    h4, p {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        max-width: 100%;
+    }
+    
+    /* Ensure tabs don't overflow */
+    .tab {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 200px;
+    }
+    
+    /* Fix for long findings text */
+    .list-disc li {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        white-space: pre-wrap;
+        max-width: 100%;
+    }
+</style>
+    <h1 class="text-3xl font-bold text-gray-300 mb-6 animate-fade-in"><i class="fas fa-code mr-2 text-cyan-400"></i> Function App</h1>
+    <button id="start-functionapp-scan" class="mb-6 bg-gray-500 text-white px-6 py-2 rounded-full cursor-not-allowed transition duration-200 flex items-center" disabled>
+        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span id="fetching-text">Fetching Function Apps...</span>
+    </button>
+    <div id="fetching-status" class="mb-4 text-sm text-gray-400">
+        <p>⏱️ This may take 30-60 seconds in larger environments</p>
+        <p id="subscription-progress" class="mt-1">📊 Checking subscriptions...</p>
+    </div>
+    <div id="scan-status" class="mb-6 hidden">
+        <!-- Progress Tracker -->
+        <div class="flex justify-between mb-4">
+            <div class="text-center">
+                <div class="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-gray-300" id="step-1">
+                    <i class="fas fa-code"></i>
+                </div>
+                <p class="text-sm text-gray-400 mt-1">Scanning Function Apps</p>
+            </div>
+            <div class="text-center">
+                <div class="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-gray-300" id="step-2">
+                    <i class="fas fa-search"></i>
+                </div>
+                <p class="text-sm text-gray-400 mt-1">Analyzing Security</p>
+            </div>
+            <div class="text-center">
+                <div class="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-gray-300" id="step-3">
+                    <i class="fas fa-check"></i>
+                </div>
+                <p class="text-sm text-gray-400 mt-1">Generating Report</p>
+            </div>
+        </div>
+        <p class="text-yellow-600 flex items-center justify-center">
+            <svg class="h-5 w-5 mr-2 animate-spin" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="url(#gradient)" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8h8a8 8 0 01-16 0z"></path>
+                <defs>
+                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#00BCD4;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#10B981;stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+            </svg>
+            <span class="text-lg font-semibold">Scanning in Progress...</span>
+            <span id="timer" class="ml-2 text-gray-400"> (0s elapsed)</span>
+        </p>
+        <div class="w-full bg-gray-600 rounded-full h-2.5 mt-2">
+            <div id="progress-bar" class="bg-cyan-400 h-2.5 rounded-full" style="width: 0%"></div>
+        </div>
+        <p id="progress-text" class="text-sm text-gray-400 mt-1 text-center">0/{{ total_function_apps }} Function Apps scanned (0%)</p>
+    </div>
+    <div id="functionapp-results" class="space-y-6"></div>
+
+    <div id="toast" class="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow-lg hidden animate-slide-in"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let totalFunctionApps = 0;
+        let scanRequested = false; // Track if user clicked scan while loading
+        
+        // Fetch total Function Apps count asynchronously after page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const subscriptionProgress = document.getElementById('subscription-progress');
+            const fetchingText = document.getElementById('fetching-text');
+            const fetchingStatus = document.getElementById('fetching-status');
+            
+            // Show initial progress
+            subscriptionProgress.textContent = '📊 Checking subscriptions...';
+            
+            // Simulate progress updates to show activity
+            let progressCounter = 0;
+            const progressInterval = setInterval(() => {
+                progressCounter++;
+                if (progressCounter === 1) {
+                    subscriptionProgress.textContent = '📊 Checking subscriptions...';
+                } else if (progressCounter === 2) {
+                    subscriptionProgress.textContent = '🔍 Discovering Function Apps...';
+                } else if (progressCounter === 3) {
+                    subscriptionProgress.textContent = '📈 Counting resources...';
+                } else if (progressCounter === 4) {
+                    subscriptionProgress.textContent = '⏳ Finalizing count...';
+                } else {
+                    progressCounter = 0; // Reset counter
+                }
+            }, 2000); // Update every 2 seconds
+            
+            fetch('/get_total_function_apps')
+                .then(response => response.json())
+                .then(data => {
+                    clearInterval(progressInterval); // Stop progress updates
+                    
+                    if (data.total_function_apps !== undefined) {
+                        totalFunctionApps = data.total_function_apps;
+                        const scanButton = document.getElementById('start-functionapp-scan');
+                        const progressText = document.getElementById('progress-text');
+                        
+                        // Hide fetching status and enable scan button
+                        fetchingStatus.style.display = 'none';
+                        scanButton.disabled = false;
+                        scanButton.innerHTML = 'Start Scan';
+                        scanButton.className = 'mb-6 bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition duration-200 hover:shadow-lg active:scale-95 hover-scale';
+                        progressText.textContent = `0/${totalFunctionApps} Function Apps scanned (0%)`;
+                        
+                        console.log(`Total Function Apps loaded: ${totalFunctionApps}`);
+                        
+                        // If user clicked scan while loading, start scan now
+                        if (scanRequested) {
+                            scanRequested = false;
+                            scanButton.click();
+                        }
+                    } else if (data.error) {
+                        clearInterval(progressInterval);
+                        console.error('Error loading total Function Apps count:', data.error);
+                        const scanButton = document.getElementById('start-functionapp-scan');
+                        fetchingStatus.style.display = 'none';
+                        scanButton.disabled = false;
+                        scanButton.innerHTML = 'Start Scan (Count Unavailable)';
+                        scanButton.className = 'mb-6 bg-yellow-600 text-white px-6 py-2 rounded-full hover:bg-yellow-700 transition duration-200 hover:shadow-lg active:scale-95 hover-scale';
+                    }
+                })
+                .catch(error => {
+                    clearInterval(progressInterval);
+                    console.error('Error fetching total Function Apps count:', error);
+                    const scanButton = document.getElementById('start-functionapp-scan');
+                    fetchingStatus.style.display = 'none';
+                    scanButton.disabled = false;
+                    scanButton.innerHTML = 'Start Scan (Count Unavailable)';
+                    scanButton.className = 'mb-6 bg-yellow-600 text-white px-6 py-2 rounded-full hover:bg-yellow-700 transition duration-200 hover:shadow-lg active:scale-95 hover-scale';
+                });
+        });
+
+        document.getElementById('start-functionapp-scan').addEventListener('click', function() {
+            console.log('Start Scan button clicked');
+
+            // If button is disabled (still loading total count), just set flag and return
+            if (this.disabled) {
+                scanRequested = true;
+                console.log('Scan requested while loading total count. Will start when count is ready.');
+                return;
+            }
+
+            const status = document.getElementById('scan-status');
+            const resultsDiv = document.getElementById('functionapp-results');
+            const timer = document.getElementById('timer');
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+            const toast = document.getElementById('toast');
+
+            // Reset UI for rescan
+            status.classList.remove('hidden');
+            resultsDiv.innerHTML = '';
+            progressBar.style.width = '0%';
+            progressText.textContent = `0/${totalFunctionApps} Function Apps scanned (0%)`;
+            this.textContent = 'Start Scan';
+            this.disabled = true;
+
+            // Reset progress tracker
+            document.getElementById('step-1').classList.remove('bg-green-600', 'text-white');
+            document.getElementById('step-2').classList.remove('bg-green-600', 'text-white');
+            document.getElementById('step-3').classList.remove('bg-green-600', 'text-white');
+            document.getElementById('step-1').classList.add('bg-gray-600', 'text-gray-300');
+            document.getElementById('step-2').classList.add('bg-gray-600', 'text-gray-300');
+            document.getElementById('step-3').classList.add('bg-gray-600', 'text-gray-300');
+
+            let seconds = 0;
+            const interval = setInterval(() => {
+                seconds++;
+                timer.textContent = `(${seconds}s elapsed)`;
+            }, 1000);
+
+            const results = { subscriptions: {} };
+            const source = new EventSource('/scan_functionapp_stream');
+            console.log('EventSource opened for /scan_functionapp_stream');
+
+            source.onopen = function() {
+                console.log('Connection to scan_functionapp_stream established');
+                // Step 1: Scanning Function Apps
+                document.getElementById('step-1').classList.remove('bg-gray-600', 'text-gray-300');
+                document.getElementById('step-1').classList.add('bg-green-600', 'text-white');
+            };
+
+            source.onmessage = function(event) {
+                console.log('Received event data:', event.data);
+                const data = JSON.parse(event.data);
+                if (data.type === 'functionapp') {
+                    if (!results.subscriptions[data.subscription]) {
+                        results.subscriptions[data.subscription] = {};
+                    }
+                    results.subscriptions[data.subscription] = {
+                        ...results.subscriptions[data.subscription],
+                        ...data.function_app
+                    };
+                    // Save to database
+                    const appName = Object.keys(data.function_app)[0];
+                    const appData = data.function_app[appName];
+                    fetch('/save_scan_result', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            subscription_id: data.subscription,
+                            service_type: 'Function App',
+                            service_name: appName,
+                            has_findings: appData.has_findings ? 1 : 0
+                        })
+                    }).then(response => response.json())
+                      .then(data => console.log('Saved to database:', data))
+                      .catch(err => console.error('Error saving to database:', err));
+                    updateResults();
+                    // Step 2: Analyzing Security
+                    document.getElementById('step-2').classList.remove('bg-gray-600', 'text-gray-300');
+                    document.getElementById('step-2').classList.add('bg-green-600', 'text-white');
+                    progressBar.style.width = `${data.progress.percentage}%`;
+                    progressText.textContent = `${data.progress.apps_processed}/${totalFunctionApps} Function Apps scanned (${data.progress.percentage}%)`;
+                } else if (data.type === 'summary') {
+                    clearInterval(interval);
+                    status.classList.add('hidden');
+                    results.total_subs = data.total_subs;
+                    results.total_function_apps = data.total_function_apps;
+                    results.total_findings = data.total_findings;
+                    results.elapsed_time = data.elapsed_time;
+                    // Step 3: Generating Report
+                    document.getElementById('step-3').classList.remove('bg-gray-600', 'text-gray-300');
+                    document.getElementById('step-3').classList.add('bg-green-600', 'text-white');
+                    updateResults(true);
+                    showToast('Scan Completed!');
+                    source.close();
+                    document.getElementById('start-functionapp-scan').textContent = 'Re-scan';
+                    document.getElementById('start-functionapp-scan').disabled = false;
+
+                    document.getElementById('export-functionapp').addEventListener('click', function() {
+                        // Show loading state
+                        this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Generating Report...';
+                        this.disabled = true;
+                        
+                        fetch('/export_functionapp', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(results)
+                        })
+                        .then(response => response.json())
+                        .then(result => {
+                            if (result.status === 'success') {
+                                showToast('HTML Report Generated!');
+                                document.getElementById('export-functionapp-status').textContent = `Report saved as: ${result.filename}`;
+                                document.getElementById('export-functionapp-status').classList.remove('hidden');
+                                
+                                // Reset button
+                                this.innerHTML = '<i class="fas fa-file-export mr-2"></i> Export HTML Report for this scan';
+                                this.disabled = false;
+                            } else {
+                                showToast('Export Failed: ' + result.message);
+                                this.innerHTML = '<i class="fas fa-file-export mr-2"></i> Export HTML Report for this scan';
+                                this.disabled = false;
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Export error:', error);
+                            showToast('Export Failed: ' + error.message);
+                            this.innerHTML = '<i class="fas fa-file-export mr-2"></i> Export HTML Report for this scan';
+                            this.disabled = false;
+                        });
+                    });
+                } else if (data.error) {
+                    clearInterval(interval);
+                    status.classList.add('hidden');
+                    resultsDiv.innerHTML = `<p class="text-red-500 flex items-center"><i class="fas fa-exclamation-circle mr-2"></i> ${data.error}</p>`;
+                    source.close();
+                    document.getElementById('start-functionapp-scan').textContent = 'Re-scan';
+                    document.getElementById('start-functionapp-scan').disabled = false;
+                }
+            };
+
+            source.onerror = function() {
+                console.error('EventSource error occurred');
+                clearInterval(interval);
+                status.classList.add('hidden');
+                resultsDiv.innerHTML = `<p class="text-red-500 flex items-center"><i class="fas fa-exclamation-circle mr-2"></i> An error occurred during the scan.</p>`;
+                source.close();
+                document.getElementById('start-functionapp-scan').textContent = 'Re-scan';
+                document.getElementById('start-functionapp-scan').disabled = false;
+            };
+
+            function updateResults(isComplete = false) {
+                let html = '';
+                if (isComplete) {
+                    // Summary Card with Pie Chart
+                    html += `
+                        <div class="bg-gray-700 rounded-lg shadow-lg p-6 mb-6 border-l-4 border-cyan-400">
+                            <h3 class="text-xl font-semibold text-gray-300 mb-4">Scan Summary</h3>
+                            <div class="flex flex-col md:flex-row items-center">
+                                <div class="w-full md:w-1/3 mb-4 md:mb-0">
+                                    <canvas id="summary-chart" height="150"></canvas>
+                                </div>
+                                <div class="w-full md:w-2/3 md:pl-6">
+                                    <p class="text-gray-400">Subscriptions Analyzed: ${results.total_subs}</p>
+                                    <p class="text-gray-400">Function Apps Processed: ${results.total_function_apps}</p>
+                                    <p class="text-gray-400">Function Apps with Findings: ${results.total_findings}</p>
+                                    <p class="text-gray-400">Time Taken: ${results.elapsed_time} seconds</p>
+                                    <p class="text-green-600">Results saved to 'results/functionapp'</p>
+                                </div>
+                            </div>
+                        </div>`;
+                }
+                for (const [sub_id, function_apps] of Object.entries(results.subscriptions)) {
+                    html += `
+                        <div class="bg-gray-700 rounded-lg shadow-lg p-6 border-l-4 border-blue-600 hover:shadow-xl transition-shadow duration-200">
+                            <h3 class="text-xl font-semibold text-gray-300 cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')">${sub_id} <span class="text-sm text-gray-500">(${Object.keys(function_apps).length} Function Apps)</span></h3>
+                            <div class="grid grid-cols-1 gap-4 mt-2">
+                    `;
+                    for (const [app_name, app_data] of Object.entries(function_apps)) {
+                        const appsettings_findings = app_data.appsettings_findings || [];
+                        const appkeys_findings = app_data.appkeys_findings || [];
+                        const file_findings = app_data.file_findings || [];
+                        const hasFindings = app_data.has_findings;
+                        html += `
+                            <div class="border-l-4 border-blue-600 p-4 rounded-lg bg-gray-600 hover:shadow-xl transition-shadow duration-200">
+                                <h4 class="text-lg font-medium text-gray-300">${app_name}</h4>
+                                <p class="text-gray-400">Resource Group: ${app_data.resource_group}</p>
+                                <p class="text-gray-400">Runtime: ${app_data.runtime || 'unknown'}</p>
+                                <div class="flex space-x-4 mt-2 border-b border-gray-500">
+                                    <button class="tab ${hasFindings ? 'border-b-2 border-cyan-400 text-cyan-400' : 'text-gray-400'} pb-2 px-4 focus:outline-none" data-tab="findings-${app_name}">Findings${hasFindings ? '<span class="ml-2 bg-red-600 text-white text-xs rounded-full px-2 py-1">!</span>' : ''}</button>
+                                    <button class="tab ${appsettings_findings.length > 0 ? 'text-cyan-400' : 'text-gray-400'} pb-2 px-4 focus:outline-none" data-tab="appsettings-${app_name}">App Settings${appsettings_findings.length > 0 ? `<span class="ml-2 bg-red-600 text-white text-xs rounded-full px-2 py-1">${appsettings_findings.length}</span>` : ''}</button>
+                                    <button class="tab ${appkeys_findings.length > 0 ? 'text-cyan-400' : 'text-gray-400'} pb-2 px-4 focus:outline-none" data-tab="appkeys-${app_name}">App Keys${appkeys_findings.length > 0 ? `<span class="ml-2 bg-red-600 text-white text-xs rounded-full px-2 py-1">${appkeys_findings.length}</span>` : ''}</button>
+                                    <button class="tab ${file_findings.length > 0 ? 'text-cyan-400' : 'text-gray-400'} pb-2 px-4 focus:outline-none" data-tab="files-${app_name}">Files${file_findings.length > 0 ? `<span class="ml-2 bg-red-600 text-white text-xs rounded-full px-2 py-1">${file_findings.length}</span>` : ''}</button>
+                                </div>
+                                <div id="findings-${app_name}" class="tab-content mt-4">
+                                    <div class="p-2 bg-gray-800 rounded-lg ${hasFindings ? 'border border-red-600' : 'border border-gray-600'}">
+                                        <ul class="list-disc list-inside text-gray-400">
+                                            <li class="${hasFindings ? 'text-red-600' : 'text-green-600'}">Sensitive info found: ${hasFindings ? 'Yes' : 'No'}</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div id="appsettings-${app_name}" class="tab-content mt-4 hidden">
+                                    <div class="p-2 bg-gray-800 rounded-lg ${appsettings_findings.length > 0 ? 'border border-red-600' : 'border border-gray-600'}">
+                                        ${appsettings_findings.length > 0 ? `
+                                            <ul class="list-disc list-inside text-red-600" style="text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);">
+                                                ${appsettings_findings.map(f => `<li>${f}</li>`).join('')}
+                                            </ul>
+                                        ` : '<p class="text-green-600">No sensitive info found</p>'}
+                                    </div>
+                                </div>
+                                <div id="appkeys-${app_name}" class="tab-content mt-4 hidden">
+                                    <div class="p-2 bg-gray-800 rounded-lg ${appkeys_findings.length > 0 ? 'border border-red-600' : 'border border-gray-600'}">
+                                        ${appkeys_findings.length > 0 ? `
+                                            <ul class="list-disc list-inside text-red-600" style="text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);">
+                                                ${appkeys_findings.map(f => `<li>${f}</li>`).join('')}
+                                            </ul>
+                                        ` : '<p class="text-green-600">No sensitive info found</p>'}
+                                    </div>
+                                </div>
+                                <div id="files-${app_name}" class="tab-content mt-4 hidden">
+                                    <div class="p-2 bg-gray-800 rounded-lg ${file_findings.length > 0 ? 'border border-red-600' : 'border border-gray-600'}">
+                                        ${file_findings.length > 0 ? `
+                                            <ul class="list-disc list-inside text-red-600" style="text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);">
+                                                ${file_findings.map(f => `<li>${f}</li>`).join('')}
+                                            </ul>
+                                        ` : '<p class="text-green-600">No sensitive info found</p>'}
+                                    </div>
+                                </div>
+                            </div>`;
+                    }
+                    html += `</div></div>`;
+                }
+                if (isComplete) {
+                    html += `
+                        <button id="export-functionapp" class="mt-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-full hover:from-blue-700 hover:to-purple-700 transition duration-200 hover:shadow-lg active:scale-95 hover-scale flex items-center">
+                            <i class="fas fa-file-export mr-2"></i> Export HTML Report for this scan
+                        </button>
+                        <p id="export-functionapp-status" class="mt-2 text-green-600 hidden">HTML report generated successfully!</p>`;
+                }
+                resultsDiv.innerHTML = html;
+
+                // Initialize pie chart for summary
+                if (isComplete) {
+                    const ctx = document.getElementById('summary-chart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'pie',
+                        data: {
+                            labels: ['With Findings', 'Without Findings'],
+                            datasets: [{
+                                data: [results.total_findings, results.total_function_apps - results.total_findings],
+                                backgroundColor: ['#EF4444', '#10B981'],
+                                borderColor: ['#B91C1C', '#059669'],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            plugins: {
+                                legend: { labels: { color: '#E0E0E0' } }
+                            }
+                        }
+                    });
+                }
+
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        const tabName = this.getAttribute('data-tab');
+                        const card = this.closest('.border-l-4');
+                        card.querySelectorAll('.tab').forEach(t => {
+                            t.classList.remove('border-b-2', 'border-cyan-400', 'text-cyan-400');
+                            t.classList.add('text-gray-400');
+                        });
+                        card.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+                        this.classList.add('border-b-2', 'border-cyan-400', 'text-cyan-400');
+                        document.getElementById(tabName).classList.remove('hidden');
+                    });
+                });
+            }
+
+            function showToast(message) {
+                const toast = document.getElementById('toast');
+                toast.textContent = message;
+                toast.classList.remove('hidden');
+                setTimeout(() => toast.classList.add('hidden'), 3000);
+            }
+        });
+    </script>
+{% endblock %}

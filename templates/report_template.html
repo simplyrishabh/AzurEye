@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ report_title }} - AzurEye Security Report</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #1f2937; 
+            line-height: 1.6; 
+            margin: 0; 
+            min-height: 100vh;
+        }
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            padding: 2rem; 
+        }
+        .header { 
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #06b6d4 100%); 
+            color: white; 
+            padding: 3rem 2rem; 
+            text-align: center; 
+            border-radius: 1rem 1rem 0 0; 
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            pointer-events: none;
+        }
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+        .executive-summary {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 2rem;
+            margin: 2rem 0;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid #3b82f6;
+        }
+        .toc { 
+            background: #ffffff; 
+            padding: 2rem; 
+            margin: 2rem 0; 
+            border-radius: 1rem; 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+        }
+        .toc h2 { 
+            font-size: 1.75rem; 
+            font-weight: 700; 
+            color: #1e3a8a; 
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .toc ul {
+            list-style: none;
+            padding: 0;
+        }
+        .toc li {
+            margin: 0.75rem 0;
+        }
+        .toc a {
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            display: block;
+            transition: all 0.2s ease;
+        }
+        .toc a:hover {
+            background-color: #eff6ff;
+            color: #1d4ed8;
+            transform: translateX(5px);
+        }
+        .section { 
+            background: white; 
+            padding: 2.5rem; 
+            margin-bottom: 2rem; 
+            border-radius: 1rem; 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+        }
+        .section h2 { 
+            font-size: 1.75rem; 
+            font-weight: 700; 
+            color: #1e3a8a; 
+            margin-bottom: 1.5rem; 
+            border-bottom: 3px solid #3b82f6; 
+            padding-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .section h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #374151;
+            margin: 1.5rem 0 1rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .vulnerability-card {
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            border: 2px solid #fca5a5;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            position: relative;
+            overflow: hidden;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        .vulnerability-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(180deg, #dc2626 0%, #ef4444 100%);
+        }
+        .vulnerability-card.high {
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            border-color: #fca5a5;
+        }
+        .vulnerability-card.medium {
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            border-color: #fcd34d;
+        }
+        .vulnerability-card.low {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border-color: #86efac;
+        }
+        .vulnerability-card.high::before {
+            background: linear-gradient(180deg, #dc2626 0%, #ef4444 100%);
+        }
+        .vulnerability-card.medium::before {
+            background: linear-gradient(180deg, #d97706 0%, #f59e0b 100%);
+        }
+        .vulnerability-card.low::before {
+            background: linear-gradient(180deg, #16a34a 0%, #22c55e 100%);
+        }
+        .severity-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .severity-high {
+            background-color: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fca5a5;
+        }
+        .severity-medium {
+            background-color: #fffbeb;
+            color: #d97706;
+            border: 1px solid #fcd34d;
+        }
+        .severity-low {
+            background-color: #f0fdf4;
+            color: #16a34a;
+            border: 1px solid #86efac;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+            text-align: center;
+            transition: transform 0.2s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #1e3a8a;
+            margin-bottom: 0.5rem;
+        }
+        .stat-label {
+            color: #6b7280;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 0.875rem;
+        }
+        .code-block {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: 300px;
+            margin: 1rem 0;
+            border: 1px solid #374151;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+        .code-block .highlight {
+            background-color: #dc2626;
+            color: #ffffff;
+            padding: 0.125rem 0.25rem;
+            border-radius: 0.25rem;
+            font-weight: 600;
+        }
+        .table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 1.5rem;
+            background: white;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .table th, .table td { 
+            padding: 1rem; 
+            text-align: left; 
+            border-bottom: 1px solid #e5e7eb; 
+        }
+        .table th { 
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 0.875rem;
+        }
+        .table tbody tr:hover {
+            background-color: #f8fafc;
+        }
+        .table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        .recommendation {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border: 2px solid #86efac;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            position: relative;
+        }
+        .recommendation::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(180deg, #16a34a 0%, #22c55e 100%);
+        }
+        .footer { 
+            text-align: center; 
+            padding: 2rem; 
+            background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+            color: #d1d5db; 
+            margin-top: 3rem; 
+            border-radius: 1rem 1rem 0 0;
+        }
+        .footer a {
+            color: #60a5fa;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            color: #93c5fd;
+            text-decoration: underline;
+        }
+        .chart-container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin: 1.5rem 0;
+        }
+        .no-findings {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border: 2px solid #86efac;
+            border-radius: 0.75rem;
+            padding: 2rem;
+            text-align: center;
+            color: #16a34a;
+        }
+        .no-findings i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        .resource-details {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        .resource-name {
+            font-weight: 600;
+            color: #1e3a8a;
+            font-size: 1.125rem;
+        }
+        .resource-group {
+            color: #6b7280;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        .text-content {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
+            max-width: 100%;
+        }
+        
+        .long-text {
+            white-space: pre-wrap;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+        }
+        
+        @media print {
+            body { background: white; }
+            .header { background: #1e3a8a !important; }
+            .section { box-shadow: none; border: 1px solid #e5e7eb; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <h1 class="text-4xl font-bold mb-4">
+                    <i class="fas fa-shield-alt mr-3"></i>
+                    {{ report_title }}
+                </h1>
+                <p class="text-xl opacity-90 mb-2">AzurEye Security Assessment Report</p>
+                <p class="text-sm opacity-75">Generated on {{ timestamp }}</p>
+                <div class="mt-4 flex justify-center gap-4 text-sm">
+                    <span><i class="fas fa-user mr-1"></i> {{ user_name }}</span>
+                    <span><i class="fas fa-envelope mr-1"></i> {{ user_email }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Executive Summary -->
+        <div class="executive-summary">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-chart-line mr-2 text-blue-600"></i>
+                Executive Summary
+            </h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">{{ total_resources }}</div>
+                    <div class="stat-label">Resources Scanned</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number text-red-600">{{ total_vulnerabilities }}</div>
+                    <div class="stat-label">Resources with Issues</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number text-green-600">{{ secure_count }}</div>
+                    <div class="stat-label">Secure Resources</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number text-blue-600">{{ total_subscriptions }}</div>
+                    <div class="stat-label">Subscriptions</div>
+                </div>
+            </div>
+            {% if total_vulnerabilities > 0 %}
+            <div class="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p class="text-red-800 font-semibold">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    Security Alert: {{ total_vulnerabilities }} resources with issues detected across {{ total_resources }} total resources.
+                    Please review the detailed findings below and take appropriate action.
+                </p>
+            </div>
+            {% else %}
+            <div class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <p class="text-green-800 font-semibold">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    Security Status: No issues detected. All {{ total_resources }} resources appear to be properly configured.
+                </p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Table of Contents -->
+        <div class="toc">
+            <h2><i class="fas fa-list mr-2"></i>Table of Contents</h2>
+            <ul>
+                <li><a href="#scan-overview">Scan Overview</a></li>
+                <li><a href="#vulnerability-details">Vulnerability Details</a></li>
+                <li><a href="#resource-breakdown">Resource Breakdown</a></li>
+                <li><a href="#recommendations">Security Recommendations</a></li>
+                <li><a href="#appendix">Appendix</a></li>
+            </ul>
+        </div>
+
+        <!-- Scan Overview -->
+        <div class="section" id="scan-overview">
+            <h2><i class="fas fa-search mr-2"></i>Scan Overview</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h3><i class="fas fa-info-circle mr-2"></i>Scan Information</h3>
+                    <ul class="space-y-2">
+                        <li><strong>Scan Type:</strong> {{ scan_type }}</li>
+                        <li><strong>Scan Date:</strong> {{ timestamp }}</li>
+                        <li><strong>Total Subscriptions:</strong> {{ total_subscriptions }}</li>
+                        <li><strong>Total Resources:</strong> {{ total_resources }}</li>
+                        <li><strong>Scan Duration:</strong> {{ scan_duration }}</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3><i class="fas fa-chart-pie mr-2"></i>Resource Status</h3>
+                    <div class="chart-container">
+                        <canvas id="statusChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vulnerability Details -->
+        <div class="section" id="vulnerability-details">
+            <h2><i class="fas fa-bug mr-2"></i>Vulnerability Details</h2>
+            {% if vulnerabilities %}
+                <!-- Group vulnerabilities by resource name -->
+                {% set resources = {} %}
+                {% for vulnerability in vulnerabilities %}
+                    {% set resource_key = vulnerability.resource_name + "|" + vulnerability.subscription_id %}
+                    {% if resource_key not in resources %}
+                        {% set _ = resources.update({resource_key: {
+                            'name': vulnerability.resource_name,
+                            'subscription_id': vulnerability.subscription_id,
+                            'resource_group': vulnerability.resource_group,
+                            'vulnerabilities': []
+                        }}) %}
+                    {% endif %}
+                    {% set _ = resources[resource_key]['vulnerabilities'].append(vulnerability) %}
+                {% endfor %}
+                
+                <!-- Display vulnerabilities by resource -->
+                {% for resource_key, resource_data in resources.items() %}
+                <div class="mb-8">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-cube mr-2 text-blue-600"></i>
+                        {{ resource_data.name }}
+                        <span class="ml-2 text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full">{{ resource_data.vulnerabilities|length }} issue{{ 's' if resource_data.vulnerabilities|length != 1 else '' }}</span>
+                    </h3>
+                    
+                    <div class="resource-details mb-4">
+                        <div class="resource-group">Resource Group: {{ resource_data.resource_group }}</div>
+                        <div class="resource-group">Subscription: {{ resource_data.subscription_id }}</div>
+                    </div>
+                    
+                    <!-- Group issues by category within this resource -->
+                    {% set categories = {} %}
+                    {% for vulnerability in resource_data.vulnerabilities %}
+                        {% if vulnerability.category not in categories %}
+                            {% set _ = categories.update({vulnerability.category: []}) %}
+                        {% endif %}
+                        {% set _ = categories[vulnerability.category].append(vulnerability) %}
+                    {% endfor %}
+                    
+                    {% for category, vulns in categories.items() %}
+                    <div class="ml-4 mb-4">
+                        <h4 class="text-lg font-medium text-gray-700 mb-3 flex items-center">
+                            <i class="fas fa-folder-open mr-2 text-gray-500"></i>
+                            {{ category }}
+                            <span class="ml-2 text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">{{ vulns|length }} issue{{ 's' if vulns|length != 1 else '' }}</span>
+                        </h4>
+                        
+                        {% for vulnerability in vulns %}
+                        <div class="vulnerability-card mb-3 ml-4">
+                            <div class="flex justify-between items-start mb-3">
+                                <h5 class="text-base font-semibold text-gray-800">
+                                    {{ vulnerability.title }}
+                                </h5>
+                                <span class="severity-badge severity-medium">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    ISSUE
+                                </span>
+                            </div>
+                            <p class="text-gray-700 mb-3 text-content">{{ vulnerability.description }}</p>
+                            {% if vulnerability.code_snippet %}
+                            <div class="code-block">
+                                <pre class="long-text">{{ vulnerability.code_snippet }}</pre>
+                            </div>
+                            {% endif %}
+                            <div class="recommendation">
+                                <h6 class="font-semibold text-green-800 mb-2">
+                                    <i class="fas fa-lightbulb mr-1"></i>Recommendation
+                                </h6>
+                                <div class="text-green-700 whitespace-pre-line text-content long-text">{{ vulnerability.recommendation }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="no-findings">
+                <i class="fas fa-shield-check"></i>
+                <h3 class="text-xl font-semibold mb-2">No Issues Found</h3>
+                <p>Congratulations! No security issues were detected in the scanned resources.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Resource Breakdown -->
+        <div class="section" id="resource-breakdown">
+            <h2><i class="fas fa-server mr-2"></i>Resource Breakdown</h2>
+            {% for subscription_id, resources in resource_breakdown.items() %}
+            <h3><i class="fas fa-folder mr-2"></i>Subscription: {{ subscription_id }}</h3>
+            <div class="overflow-x-auto">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Resource Name</th>
+                            <th>Resource Group</th>
+                            <th>Type</th>
+                            <th>Vulnerabilities</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for resource in resources %}
+                        <tr>
+                            <td class="font-medium">{{ resource.name }}</td>
+                            <td>{{ resource.resource_group }}</td>
+                            <td>{{ resource.type }}</td>
+                            <td>
+                                {% if resource.vulnerability_count > 0 %}
+                                    <span class="text-red-600 font-semibold">{{ resource.vulnerability_count }}</span>
+                                {% else %}
+                                    <span class="text-green-600 font-semibold">0</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if resource.vulnerability_count > 0 %}
+                                    <span class="severity-badge severity-high">Vulnerable</span>
+                                {% else %}
+                                    <span class="severity-badge severity-low">Secure</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Recommendations -->
+        <div class="section" id="recommendations">
+            <h2><i class="fas fa-tasks mr-2"></i>Security Recommendations</h2>
+            <div class="space-y-4">
+                <div class="recommendation">
+                    <h4 class="font-semibold text-green-800 mb-2">
+                        <i class="fas fa-key mr-1"></i>Immediate Actions Required
+                    </h4>
+                    <ul class="text-green-700 space-y-1">
+                        <li>• Review and remediate all high-severity vulnerabilities within 24 hours</li>
+                        <li>• Implement proper secret management practices</li>
+                        <li>• Enable audit logging for all critical resources</li>
+                        <li>• Review and update access policies regularly</li>
+                    </ul>
+                </div>
+                <div class="recommendation">
+                    <h4 class="font-semibold text-green-800 mb-2">
+                        <i class="fas fa-shield-alt mr-1"></i>Long-term Security Measures
+                    </h4>
+                    <ul class="text-green-700 space-y-1">
+                        <li>• Implement automated security scanning in CI/CD pipelines</li>
+                        <li>• Establish regular security review processes</li>
+                        <li>• Train development teams on secure coding practices</li>
+                        <li>• Consider implementing Azure Security Center recommendations</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Appendix -->
+        <div class="section" id="appendix">
+            <h2><i class="fas fa-book mr-2"></i>Appendix</h2>
+            <h3><i class="fas fa-info-circle mr-2"></i>About This Report</h3>
+            <p class="text-gray-600 mb-4">
+                This security assessment report was generated by AzurEye, an automated Azure security scanning tool. 
+                The report provides a comprehensive analysis of your Azure resources and identifies potential security vulnerabilities.
+            </p>
+            <h3><i class="fas fa-tools mr-2"></i>Scan Methodology</h3>
+            <ul class="text-gray-600 space-y-1">
+                <li>• Automated scanning of Azure resources using Azure CLI</li>
+                <li>• Analysis of configuration settings and access policies</li>
+                <li>• Code analysis for hardcoded secrets and sensitive information</li>
+                <li>• Compliance checking against security best practices</li>
+            </ul>
+        </div>
+
+        <div class="footer">
+            <p class="text-sm">
+                Generated by <strong>AzurEye</strong> - Azure Security Assessment Tool
+            </p>
+            <p class="text-xs mt-2 opacity-75">
+                For questions about this report, please contact your security team.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Status Chart
+        const statusCtx = document.getElementById('statusChart').getContext('2d');
+        new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Resources with Issues', 'Secure Resources'],
+                datasets: [{
+                    data: [{{ total_vulnerabilities }}, {{ secure_count }}],
+                    backgroundColor: [
+                        '#dc2626',
+                        '#16a34a'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

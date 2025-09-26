@@ -1,0 +1,68 @@
+/* Card Hover Effects */
+.card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 120, 212, 0.2);
+}
+
+/* Tab Styles */
+.tab {
+    position: relative;
+    cursor: pointer;
+    padding: 8px 16px;
+    border-radius: 8px 8px 0 0;
+    transition: background-color 0.2s ease;
+}
+.tab.active {
+    background-color: #0078D4;
+    color: white;
+}
+.tab:hover:not(.active) {
+    background-color: #2D3334;
+}
+
+/* Badge Styles */
+.badge {
+    display: inline-block;
+    margin-left: 6px;
+    background-color: #F44336;
+    color: white;
+    border-radius: 50%;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    text-align: center;
+    font-size: 12px;
+    line-height: 18px;
+    vertical-align: middle;
+}
+.tab:not(.has-findings) .badge {
+    display: none;
+}
+
+/* Dark Mode Adjustments */
+.dark .card {
+    background-color: #2D3334;
+    border-color: #4A4E4F;
+}
+.dark .tab.active {
+    background-color: #005A9E;
+}
+.dark .tab:hover:not(.active) {
+    background-color: #3A3F40;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 64px;
+    }
+    .sidebar .sidebar-text {
+        display: none;
+    }
+    .content {
+        margin-left: 64px;
+    }
+}

@@ -1,0 +1,437 @@
+{% extends "base.html" %}
+{% block title %}Key Vaults{% endblock %}
+{% block content %}
+    <h1 class="text-3xl font-bold text-gray-300 mb-6 animate-fade-in"><i class="fas fa-key mr-2 text-cyan-400"></i> Key Vaults</h1>
+    <button id="start-keyvault-scan" class="mb-6 bg-gray-500 text-white px-6 py-2 rounded-full cursor-not-allowed transition duration-200 flex items-center" disabled>
+        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span id="fetching-text">Fetching Key Vaults...</span>
+    </button>
+    <div id="fetching-status" class="mb-4 text-sm text-gray-400">
+        <p>⏱️ This may take 30-60 seconds in larger environments</p>
+        <p id="subscription-progress" class="mt-1">📊 Checking subscriptions...</p>
+    </div>
+    <div id="scan-status" class="mb-6 hidden">
+        <!-- Progress Tracker -->
+        <div class="flex justify-between mb-4">
+            <div class="text-center">
+                <div class="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-gray-300" id="step-1">
+                    <i class="fas fa-lock"></i>
+                </div>
+                <p class="text-sm text-gray-400 mt-1">Scanning Key Vaults</p>
+            </div>
+            <div class="text-center">
+                <div class="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-gray-300" id="step-2">
+                    <i class="fas fa-search"></i>
+                </div>
+                <p class="text-sm text-gray-400 mt-1">Analyzing Security</p>
+            </div>
+            <div class="text-center">
+                <div class="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-gray-300" id="step-3">
+                    <i class="fas fa-check"></i>
+                </div>
+                <p class="text-sm text-gray-400 mt-1">Generating Report</p>
+            </div>
+        </div>
+        <p class="text-yellow-600 flex items-center justify-center">
+            <svg class="h-5 w-5 mr-2 animate-spin" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="url(#gradient)" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8h8a8 8 0 01-16 0z"></path>
+                <defs>
+                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#00BCD4;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#10B981;stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+            </svg>
+            <span class="text-lg font-semibold">Scanning in Progress...</span>
+            <span id="timer" class="ml-2 text-gray-400"> (0s elapsed)</span>
+        </p>
+        <div class="w-full bg-gray-600 rounded-full h-2.5 mt-2">
+            <div id="progress-bar" class="bg-cyan-400 h-2.5 rounded-full" style="width: 0%"></div>
+        </div>
+        <p id="progress-text" class="text-sm text-gray-400 mt-1 text-center">0/{{ total_vaults }} Key Vaults scanned (0%)</p>
+    </div>
+    <div id="keyvault-results" class="space-y-6"></div>
+
+    <div id="toast" class="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow-lg hidden animate-slide-in"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let totalVaults = 0;
+        let scanRequested = false; // Track if user clicked scan while loading
+        
+        // Fetch total Key Vaults count asynchronously after page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const subscriptionProgress = document.getElementById('subscription-progress');
+            const fetchingText = document.getElementById('fetching-text');
+            const fetchingStatus = document.getElementById('fetching-status');
+            
+            // Show initial progress
+            subscriptionProgress.textContent = '📊 Checking subscriptions...';
+            
+            // Simulate progress updates to show activity
+            let progressCounter = 0;
+            const progressInterval = setInterval(() => {
+                progressCounter++;
+                if (progressCounter === 1) {
+                    subscriptionProgress.textContent = '📊 Checking subscriptions...';
+                } else if (progressCounter === 2) {
+                    subscriptionProgress.textContent = '🔍 Discovering Key Vaults...';
+                } else if (progressCounter === 3) {
+                    subscriptionProgress.textContent = '📈 Counting resources...';
+                } else if (progressCounter === 4) {
+                    subscriptionProgress.textContent = '⏳ Finalizing count...';
+                } else {
+                    progressCounter = 0; // Reset counter
+                }
+            }, 2000); // Update every 2 seconds
+            
+            fetch('/get_total_keyvaults')
+                .then(response => response.json())
+                .then(data => {
+                    clearInterval(progressInterval); // Stop progress updates
+                    
+                    if (data.total_vaults !== undefined) {
+                        totalVaults = data.total_vaults;
+                        const scanButton = document.getElementById('start-keyvault-scan');
+                        const progressText = document.getElementById('progress-text');
+                        
+                        // Hide fetching status and enable scan button
+                        fetchingStatus.style.display = 'none';
+                        scanButton.disabled = false;
+                        scanButton.innerHTML = 'Start Scan';
+                        scanButton.className = 'mb-6 bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition duration-200 hover:shadow-lg active:scale-95 hover-scale';
+                        progressText.textContent = `0/${totalVaults} Key Vaults scanned (0%)`;
+                        
+                        console.log(`Total Key Vaults loaded: ${totalVaults}`);
+                        
+                        // If user clicked scan while loading, start scan now
+                        if (scanRequested) {
+                            scanRequested = false;
+                            scanButton.click();
+                        }
+                    } else if (data.error) {
+                        clearInterval(progressInterval);
+                        console.error('Error loading total Key Vaults count:', data.error);
+                        const scanButton = document.getElementById('start-keyvault-scan');
+                        fetchingStatus.style.display = 'none';
+                        scanButton.disabled = false;
+                        scanButton.innerHTML = 'Start Scan (Count Unavailable)';
+                        scanButton.className = 'mb-6 bg-yellow-600 text-white px-6 py-2 rounded-full hover:bg-yellow-700 transition duration-200 hover:shadow-lg active:scale-95 hover-scale';
+                    }
+                })
+                .catch(error => {
+                    clearInterval(progressInterval);
+                    console.error('Error fetching total Key Vaults count:', error);
+                    const scanButton = document.getElementById('start-keyvault-scan');
+                    fetchingStatus.style.display = 'none';
+                    scanButton.disabled = false;
+                    scanButton.innerHTML = 'Start Scan (Count Unavailable)';
+                    scanButton.className = 'mb-6 bg-yellow-600 text-white px-6 py-2 rounded-full hover:bg-yellow-700 transition duration-200 hover:shadow-lg active:scale-95 hover-scale';
+                });
+        });
+
+        document.getElementById('start-keyvault-scan').addEventListener('click', function() {
+            console.log('Start Scan button clicked');
+
+            // If button is disabled (still loading total count), just set flag and return
+            if (this.disabled) {
+                scanRequested = true;
+                return;
+            }
+            const status = document.getElementById('scan-status');
+            const resultsDiv = document.getElementById('keyvault-results');
+            const timer = document.getElementById('timer');
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+            const toast = document.getElementById('toast');
+            // totalVaults is now loaded dynamically
+
+            // Reset UI for rescan
+            status.classList.remove('hidden');
+            resultsDiv.innerHTML = '';
+            progressBar.style.width = '0%';
+            progressText.textContent = `0/${totalVaults} Key Vaults scanned (0%)`;
+            this.textContent = 'Start Scan';
+            this.disabled = true;
+
+            // Reset progress tracker
+            document.getElementById('step-1').classList.remove('bg-green-600', 'text-white');
+            document.getElementById('step-2').classList.remove('bg-green-600', 'text-white');
+            document.getElementById('step-3').classList.remove('bg-green-600', 'text-white');
+            document.getElementById('step-1').classList.add('bg-gray-600', 'text-gray-300');
+            document.getElementById('step-2').classList.add('bg-gray-600', 'text-gray-300');
+            document.getElementById('step-3').classList.add('bg-gray-600', 'text-gray-300');
+
+            let seconds = 0;
+            const interval = setInterval(() => {
+                seconds++;
+                timer.textContent = `(${seconds}s elapsed)`;
+            }, 1000);
+
+            const results = { subscriptions: {} };
+            const source = new EventSource('/scan_keyvaults_stream');
+            console.log('EventSource opened for /scan_keyvaults_stream');
+
+            source.onopen = function() {
+                console.log('Connection to scan_keyvaults_stream established');
+                // Step 1: Scanning Key Vaults
+                document.getElementById('step-1').classList.remove('bg-gray-600', 'text-gray-300');
+                document.getElementById('step-1').classList.add('bg-green-600', 'text-white');
+            };
+
+            source.onmessage = function(event) {
+                console.log('Received event data:', event.data);
+                const data = JSON.parse(event.data);
+                if (data.type === 'vault' || data.type === 'subscription_complete') {
+                    const vaults = data.type === 'vault' ? data.vault : data.vaults;
+                    console.log(`Processing ${data.type} data:`, data);
+                    if (!results.subscriptions[data.subscription]) {
+                        results.subscriptions[data.subscription] = {};
+                    }
+                    for (const [vaultName, vaultData] of Object.entries(vaults)) {
+                        results.subscriptions[data.subscription][vaultName] = vaultData;
+                        // Save to database
+                        const hasFindings = (vaultData.privileges?.can_read_secrets || vaultData.privileges?.can_read_certs || vaultData.privileges?.can_read_keys || Object.keys(vaultData.assets?.secrets || {}).length > 0 || Object.keys(vaultData.assets?.certificates || {}).length > 0 || Object.keys(vaultData.assets?.keys || {}).length > 0 || vaultData.rbac_warning) ? 1 : 0;
+                        fetch('/save_scan_result', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                subscription_id: data.subscription,
+                                service_type: 'Key Vault',
+                                service_name: vaultName,
+                                has_findings: hasFindings
+                            })
+                        });
+                    }
+                    updateResults();
+                    if (data.progress) {
+                        // Step 2: Analyzing Security
+                        document.getElementById('step-2').classList.remove('bg-gray-600', 'text-gray-300');
+                        document.getElementById('step-2').classList.add('bg-green-600', 'text-white');
+                        progressBar.style.width = `${data.progress.percentage}%`;
+                        progressText.textContent = `${data.progress.vaults_processed}/${totalVaults} Key Vaults scanned (${data.progress.percentage}%)`;
+                    }
+                } else if (data.type === 'summary') {
+                    console.log('Summary received:', data);
+                    clearInterval(interval);
+                    status.classList.add('hidden');
+                    results.total_subs = data.total_subs;
+                    results.total_vaults = data.total_vaults;
+                    results.total_findings = data.total_findings;
+                    results.elapsed_time = data.elapsed_time;
+                    // Step 3: Generating Report
+                    document.getElementById('step-3').classList.remove('bg-gray-600', 'text-gray-300');
+                    document.getElementById('step-3').classList.add('bg-green-600', 'text-white');
+                    updateResults(true);
+                    showToast('Scan Completed!');
+                    source.close();
+                    document.getElementById('start-keyvault-scan').textContent = 'Re-scan';
+                    document.getElementById('start-keyvault-scan').disabled = false;
+
+                    document.getElementById('export-keyvault').addEventListener('click', function() {
+                        // Show loading state
+                        this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Generating Report...';
+                        this.disabled = true;
+                        
+                        fetch('/export_keyvaults', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(results)
+                        })
+                        .then(response => response.json())
+                        .then(result => {
+                            if (result.status === 'success') {
+                                showToast('HTML Report Generated!');
+                                document.getElementById('export-keyvault-status').textContent = `Report saved as: ${result.filename}`;
+                                document.getElementById('export-keyvault-status').classList.remove('hidden');
+                                
+                                // Reset button
+                                this.innerHTML = '<i class="fas fa-file-export mr-2"></i> Export HTML Report for this scan';
+                                this.disabled = false;
+                            } else {
+                                showToast('Export Failed: ' + result.message);
+                                this.innerHTML = '<i class="fas fa-file-export mr-2"></i> Export HTML Report for this scan';
+                                this.disabled = false;
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Export error:', error);
+                            showToast('Export Failed: ' + error.message);
+                            this.innerHTML = '<i class="fas fa-file-export mr-2"></i> Export HTML Report for this scan';
+                            this.disabled = false;
+                        });
+                    });
+                } else if (data.error) {
+                    console.error('Error received from stream:', data.error);
+                    clearInterval(interval);
+                    status.classList.add('hidden');
+                    resultsDiv.innerHTML = `<p class="text-red-500 flex items-center"><i class="fas fa-exclamation-circle mr-2"></i> ${data.error}</p>`;
+                    source.close();
+                    document.getElementById('start-keyvault-scan').textContent = 'Re-scan';
+                    document.getElementById('start-keyvault-scan').disabled = false;
+                } else {
+                    console.warn('Unexpected data type received:', data);
+                }
+            };
+
+            source.onerror = function() {
+                console.error('EventSource error occurred');
+                clearInterval(interval);
+                status.classList.add('hidden');
+                resultsDiv.innerHTML = `<p class="text-red-500 flex items-center"><i class="fas fa-exclamation-circle mr-2"></i> An error occurred during the scan. Check the console for details.</p>`;
+                source.close();
+                document.getElementById('start-keyvault-scan').textContent = 'Re-scan';
+                document.getElementById('start-keyvault-scan').disabled = false;
+            };
+
+            function updateResults(isComplete = false) {
+                let html = '';
+                if (isComplete) {
+                    // Summary Card with Pie Chart
+                    html += `
+                        <div class="bg-gray-700 rounded-lg shadow-lg p-6 mb-6 border-l-4 border-cyan-400">
+                            <h3 class="text-xl font-semibold text-gray-300 mb-4">Scan Summary</h3>
+                            <div class="flex flex-col md:flex-row items-center">
+                                <div class="w-full md:w-1/3 mb-4 md:mb-0">
+                                    <canvas id="summary-chart" height="150"></canvas>
+                                </div>
+                                <div class="w-full md:w-2/3 md:pl-6">
+                                    <p class="text-gray-400">Subscriptions Analyzed: ${results.total_subs || 0}</p>
+                                    <p class="text-gray-400">Key Vaults Processed: ${results.total_vaults || 0}</p>
+                                    <p class="text-gray-400">Key Vaults with Findings: ${results.total_findings || 0}</p>
+                                    <p class="text-gray-400">Time Taken: ${results.elapsed_time || 0} seconds</p>
+                                    <p class="text-green-600">Results saved to 'results/keyvault'</p>
+                                </div>
+                            </div>
+                        </div>`;
+                }
+                for (const [sub_id, vaults] of Object.entries(results.subscriptions)) {
+                    html += `
+                        <div class="bg-gray-700 rounded-lg shadow-lg p-6 border-l-4 border-blue-600 hover:shadow-xl transition-shadow duration-200">
+                            <h3 class="text-xl font-semibold text-gray-300 cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')">${sub_id} <span class="text-sm text-gray-500">(${Object.keys(vaults).length} Vaults)</span></h3>
+                            <div class="grid grid-cols-1 gap-4 mt-2">
+                    `;
+                    for (const [vault_name, vault_data] of Object.entries(vaults)) {
+                        const privileges = vault_data.privileges || {};
+                        const assets = {
+                            secrets: vault_data.assets?.secrets || {},
+                            certificates: vault_data.assets?.certificates || {},
+                            keys: vault_data.assets?.keys || {}
+                        };
+                        const rbac_warning = vault_data.rbac_warning || null;
+                        const hasPrivileges = privileges.can_read_secrets || privileges.can_read_certs || privileges.can_read_keys;
+                        html += `
+                            <div class="border-l-4 border-blue-600 p-4 rounded-lg bg-gray-600 hover:shadow-xl transition-shadow duration-200">
+                                <h4 class="text-lg font-medium text-gray-300">${vault_name}</h4>
+                                <div class="flex space-x-4 mt-2 border-b border-gray-500">
+                                    <button class="tab ${hasPrivileges ? 'border-b-2 border-cyan-400 text-cyan-400' : 'text-gray-400'} pb-2 px-4 focus:outline-none" data-tab="privileges-${vault_name}">Privileges${hasPrivileges ? '<span class="ml-2 bg-red-600 text-white text-xs rounded-full px-2 py-1">!</span>' : ''}</button>
+                                    <button class="tab ${Object.keys(assets.secrets).length > 0 ? 'text-cyan-400' : 'text-gray-400'} pb-2 px-4 focus:outline-none" data-tab="secrets-${vault_name}">Secrets${Object.keys(assets.secrets).length > 0 ? `<span class="ml-2 bg-red-600 text-white text-xs rounded-full px-2 py-1">${Object.keys(assets.secrets).length}</span>` : ''}</button>
+                                    <button class="tab ${Object.keys(assets.certificates).length > 0 ? 'text-cyan-400' : 'text-gray-400'} pb-2 px-4 focus:outline-none" data-tab="certificates-${vault_name}">Certificates${Object.keys(assets.certificates).length > 0 ? `<span class="ml-2 bg-red-600 text-white text-xs rounded-full px-2 py-1">${Object.keys(assets.certificates).length}</span>` : ''}</button>
+                                    <button class="tab ${Object.keys(assets.keys).length > 0 ? 'text-cyan-400' : 'text-gray-400'} pb-2 px-4 focus:outline-none" data-tab="keys-${vault_name}">Keys${Object.keys(assets.keys).length > 0 ? `<span class="ml-2 bg-red-600 text-white text-xs rounded-full px-2 py-1">${Object.keys(assets.keys).length}</span>` : ''}</button>
+                                    <button class="tab ${rbac_warning ? 'text-yellow-600' : 'text-gray-400'} pb-2 px-4 focus:outline-none" data-tab="warnings-${vault_name}">Warnings${rbac_warning ? '<span class="ml-2 bg-yellow-600 text-white text-xs rounded-full px-2 py-1">!</span>' : ''}</button>
+                                </div>
+                                <div id="privileges-${vault_name}" class="tab-content mt-4">
+                                    <div class="p-2 bg-gray-800 rounded-lg ${hasPrivileges ? 'border border-red-600' : 'border border-gray-600'}">
+                                        <ul class="list-disc list-inside text-gray-400">
+                                            <li class="${privileges.can_read_secrets ? 'text-red-600' : 'text-green-600'}" style="${privileges.can_read_secrets ? 'text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);' : ''}">Can read secrets: ${privileges.can_read_secrets ? 'Yes' : 'No'}</li>
+                                            <li class="${privileges.can_read_certs ? 'text-red-600' : 'text-green-600'}" style="${privileges.can_read_certs ? 'text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);' : ''}">Can read certificates: ${privileges.can_read_certs ? 'Yes' : 'No'}</li>
+                                            <li class="${privileges.can_read_keys ? 'text-red-600' : 'text-green-600'}" style="${privileges.can_read_keys ? 'text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);' : ''}">Can read keys: ${privileges.can_read_keys ? 'Yes' : 'No'}</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div id="secrets-${vault_name}" class="tab-content mt-4 hidden">
+                                    <div class="p-2 bg-gray-800 rounded-lg ${Object.keys(assets.secrets).length > 0 ? 'border border-red-600' : 'border border-gray-600'}">
+                                        ${Object.keys(assets.secrets).length > 0 ? `
+                                            <ul class="list-disc list-inside text-red-600" style="text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);">
+                                                ${Object.entries(assets.secrets).map(([name, value]) => `<li>${name}: ${value}</li>`).join('')}
+                                            </ul>
+                                        ` : '<p class="text-green-600">No secrets accessible</p>'}
+                                    </div>
+                                </div>
+                                <div id="certificates-${vault_name}" class="tab-content mt-4 hidden">
+                                    <div class="p-2 bg-gray-800 rounded-lg ${Object.keys(assets.certificates).length > 0 ? 'border border-red-600' : 'border border-gray-600'}">
+                                        ${Object.keys(assets.certificates).length > 0 ? `
+                                            <ul class="list-disc list-inside text-red-600" style="text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);">
+                                                ${Object.entries(assets.certificates).map(([name, value]) => `<li>${name}: ${value}</li>`).join('')}
+                                            </ul>
+                                        ` : '<p class="text-green-600">No certificates accessible</p>'}
+                                    </div>
+                                </div>
+                                <div id="keys-${vault_name}" class="tab-content mt-4 hidden">
+                                    <div class="p-2 bg-gray-800 rounded-lg ${Object.keys(assets.keys).length > 0 ? 'border border-red-600' : 'border border-gray-600'}">
+                                        ${Object.keys(assets.keys).length > 0 ? `
+                                            <ul class="list-disc list-inside text-red-600" style="text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);">
+                                                ${Object.entries(assets.keys).map(([name, value]) => `<li>${name}: ${value}</li>`).join('')}
+                                            </ul>
+                                        ` : '<p class="text-green-600">No keys accessible</p>'}
+                                    </div>
+                                </div>
+                                <div id="warnings-${vault_name}" class="tab-content mt-4 hidden">
+                                    <div class="p-2 bg-gray-800 rounded-lg ${rbac_warning ? 'border border-yellow-600' : 'border border-gray-600'}">
+                                        ${rbac_warning ? `
+                                            <p class="text-yellow-600" style="text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);">${rbac_warning}</p>
+                                        ` : '<p class="text-green-600">No warnings</p>'}
+                                    </div>
+                                </div>
+                            </div>`;
+                    }
+                    html += `</div></div>`;
+                }
+                if (isComplete) {
+                    html += `
+                        <button id="export-keyvault" class="mt-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-full hover:from-blue-700 hover:to-purple-700 transition duration-200 hover:shadow-lg active:scale-95 hover-scale flex items-center">
+                            <i class="fas fa-file-export mr-2"></i> Export HTML Report for this scan
+                        </button>
+                        <p id="export-keyvault-status" class="mt-2 text-green-600 hidden">HTML report generated successfully!</p>`;
+                }
+                resultsDiv.innerHTML = html;
+
+                // Initialize pie chart for summary
+                if (isComplete) {
+                    const ctx = document.getElementById('summary-chart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'pie',
+                        data: {
+                            labels: ['With Findings', 'Without Findings'],
+                            datasets: [{
+                                data: [results.total_findings, results.total_vaults - results.total_findings],
+                                backgroundColor: ['#EF4444', '#10B981'],
+                                borderColor: ['#B91C1C', '#059669'],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            plugins: {
+                                legend: { labels: { color: '#E0E0E0' } }
+                            }
+                        }
+                    });
+                }
+
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        const tabName = this.getAttribute('data-tab');
+                        const card = this.closest('.border-l-4');
+                        card.querySelectorAll('.tab').forEach(t => {
+                            t.classList.remove('border-b-2', 'border-cyan-400', 'text-cyan-400');
+                            t.classList.add('text-gray-400');
+                        });
+                        card.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+                        this.classList.add('border-b-2', 'border-cyan-400', 'text-cyan-400');
+                        document.getElementById(tabName).classList.remove('hidden');
+                    });
+                });
+            }
+
+            function showToast(message) {
+                toast.textContent = message;
+                toast.classList.remove('hidden');
+                setTimeout(() => toast.classList.add('hidden'), 3000);
+            }
+        });
+    </script>
+{% endblock %}

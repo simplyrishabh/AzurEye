@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %} - AzurEye</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <style>
+        /* Version: 2024-01-15-vibrant-theme */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+        body {
+            background: linear-gradient(135deg, #0a0e1a 0%, #1a1f2e 25%, #2d3748 50%, #1a1f2e 75%, #0a0e1a 100%);
+            background-attachment: fixed;
+            color: #f7fafc;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow-x: hidden;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(16, 185, 129, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 40% 60%, rgba(139, 92, 246, 0.06) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        @keyframes professionalGradient { 0% { } 100% { } }
+        
+        /* Colorful Accent Elements */
+        .colorful-accent {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .colorful-accent::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.2), transparent);
+            animation: shimmer 3s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        
+        /* Colorful Headers */
+        .colorful-header {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+            border-left: 4px solid #06B6D4;
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.2);
+        }
+        
+        /* Modern Professional Sidebar */
+        #sidebar {
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
+            border-right: 1px solid rgba(59, 130, 246, 0.2) !important;
+            box-shadow: 
+                0 0 0 1px rgba(255, 255, 255, 0.05),
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+            backdrop-filter: blur(20px) !important;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            z-index: 50;
+            box-sizing: border-box;
+            overflow-x: hidden;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(59, 130, 246, 0.2);
+            box-shadow: 
+                0 0 0 1px rgba(255, 255, 255, 0.05),
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        /* Animated Gradient Background */
+        @keyframes gradientShift { 0% { } 100% { } }
+        
+        @keyframes logoProfessional {
+            0% { 
+                background-position: 0% 50%;
+                text-shadow: 0 0 8px rgba(59, 130, 246, 0.4), 0 0 16px rgba(16, 185, 129, 0.3);
+            }
+            33% { 
+                background-position: 100% 50%;
+                text-shadow: 0 0 8px rgba(16, 185, 129, 0.4), 0 0 16px rgba(139, 92, 246, 0.3);
+            }
+            66% { 
+                background-position: 100% 100%;
+                text-shadow: 0 0 8px rgba(139, 92, 246, 0.4), 0 0 16px rgba(245, 158, 11, 0.3);
+            }
+            100% { 
+                background-position: 0% 50%;
+                text-shadow: 0 0 8px rgba(59, 130, 246, 0.4), 0 0 16px rgba(16, 185, 129, 0.3);
+            }
+        }
+
+        .sidebar-expanded {
+            width: 16rem !important;
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
+            border-right: 1px solid rgba(59, 130, 246, 0.2) !important;
+            box-shadow: 
+                0 0 0 1px rgba(255, 255, 255, 0.05),
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+        }
+        .sidebar-collapsed {
+            width: 5rem !important;
+            overflow: visible !important;
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
+            border-right: 1px solid rgba(59, 130, 246, 0.2) !important;
+            box-shadow: 
+                0 0 0 1px rgba(255, 255, 255, 0.05),
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+        }
+
+        /* Sidebar Header */
+        .sidebar-header {
+            padding: 1.5rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+            backdrop-filter: blur(20px);
+            z-index: 51;
+            height: 70px;
+            box-sizing: border-box;
+            border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+        .sidebar-collapsed .sidebar-header {
+            justify-content: center;
+            flex-direction: column;
+            height: auto;
+            padding: 0.5rem 0;
+            gap: 0.5rem;
+        }
+
+        #logo {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: transparent;
+            background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 25%, #e0f2fe 50%, #bae6fd 75%, #7dd3fc 100%);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            white-space: nowrap;
+            writing-mode: horizontal-tb;
+            transform: rotate(0deg);
+            text-align: left;
+            opacity: 1;
+            margin: 0;
+            letter-spacing: 1px;
+            text-shadow: 
+                0 0 15px rgba(255, 255, 255, 0.8),
+                0 0 25px rgba(255, 255, 255, 0.6),
+                0 0 35px rgba(255, 255, 255, 0.4),
+                0 0 45px rgba(59, 130, 246, 0.3);
+            animation: logoVibrant 4s ease-in-out infinite;
+        }
+        
+        #logo::before { content: none; }
+
+        @keyframes logoShimmer {
+            0% { 
+                background-position: 0% 50%; 
+                text-shadow: 0 0 30px rgba(96, 165, 250, 0.3);
+            }
+            25% { 
+                background-position: 50% 0%; 
+                text-shadow: 0 0 30px rgba(52, 211, 153, 0.3);
+            }
+            50% { 
+                background-position: 100% 50%; 
+                text-shadow: 0 0 30px rgba(167, 139, 246, 0.3);
+            }
+            75% { 
+                background-position: 50% 100%; 
+                text-shadow: 0 0 30px rgba(245, 158, 11, 0.3);
+            }
+            100% { 
+                background-position: 0% 50%; 
+                text-shadow: 0 0 30px rgba(96, 165, 250, 0.3);
+            }
+        }
+        
+        @keyframes logoVibrant {
+            0%, 100% { 
+                background-position: 0% 50%;
+                text-shadow: 0 0 15px rgba(255, 255, 255, 0.8), 0 0 25px rgba(255, 255, 255, 0.6), 0 0 35px rgba(255, 255, 255, 0.4), 0 0 45px rgba(59, 130, 246, 0.3);
+            }
+            50% { 
+                background-position: 100% 50%;
+                text-shadow: 0 0 20px rgba(255, 255, 255, 0.9), 0 0 30px rgba(255, 255, 255, 0.7), 0 0 40px rgba(255, 255, 255, 0.5), 0 0 50px rgba(59, 130, 246, 0.4);
+            }
+        }
+        
+        .sidebar-collapsed #logo {
+            opacity: 1;
+            display: block;
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            text-align: center;
+            margin: 0 auto;
+            padding: 5px 0;
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: transparent;
+            background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 25%, #e0f2fe 50%, #bae6fd 75%, #7dd3fc 100%);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            letter-spacing: 1px;
+            text-shadow: 
+                0 0 12px rgba(255, 255, 255, 0.8),
+                0 0 20px rgba(255, 255, 255, 0.6),
+                0 0 28px rgba(255, 255, 255, 0.4),
+                0 0 36px rgba(59, 130, 246, 0.3);
+            animation: logoVibrant 4s ease-in-out infinite;
+        }
+
+        #sidebar-toggle {
+            order: 1;
+        }
+        #sidebar-toggle i {
+            font-size: 1.5rem;
+            transition: transform 0.2s ease-in-out, color 0.2s ease-in-out;
+            color: #94a3b8;
+        }
+        #sidebar-toggle i:hover {
+            color: #f8fafc;
+            transform: scale(1.05);
+        }
+        .sidebar-collapsed #sidebar-toggle {
+            order: 2;
+            margin-top: 0.5rem;
+        }
+
+        /* Navigation */
+        nav {
+            margin-top: 0;
+            padding-top: 0.5rem;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        /* Navigation Links General */
+        nav a, nav .dropdown > button {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            padding: 0.875rem 1.25rem;
+            margin: 0.25rem 0.75rem;
+            border-radius: 0.75rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            color: #cbd5e1;
+            box-sizing: border-box;
+            width: calc(100% - 1.5rem);
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(10px);
+            min-height: 3.25rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        nav a:hover, nav .dropdown > button:hover {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(16, 185, 129, 0.08) 100%);
+            color: #ffffff;
+            transform: translateX(4px) scale(1.02);
+            box-shadow: 
+                0 4px 20px rgba(59, 130, 246, 0.2),
+                0 0 0 1px rgba(59, 130, 246, 0.3);
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+        nav a:hover .nav-text, nav .dropdown > button:hover .nav-text { }
+        nav a.active, nav .dropdown > button.active {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(16, 185, 129, 0.1) 100%);
+            color: #ffffff;
+            font-weight: 600;
+            border: 1px solid rgba(59, 130, 246, 0.5);
+            box-shadow: 
+                0 4px 25px rgba(59, 130, 246, 0.25),
+                0 0 0 1px rgba(59, 130, 246, 0.4);
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+        }
+        nav i {
+            width: 1.5rem;
+            text-align: center;
+            font-size: 1.25rem;
+            margin-right: 0.75rem;
+            flex-shrink: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            color: #94a3b8;
+        }
+        nav a:hover i, nav .dropdown > button:hover i {
+            color: #60a5fa;
+            text-shadow: 0 0 15px rgba(96, 165, 250, 0.6);
+            transform: scale(1.1) rotate(5deg);
+        }
+        .nav-text {
+            transition: opacity 0.2s ease-in-out;
+            overflow: hidden;
+            white-space: normal; /* Allow text to wrap */
+            line-height: 1.2; /* Adjust line height for wrapped text */
+            font-size: 0.95rem; /* Slightly larger for readability */
+            font-weight: 500; /* Medium weight for better contrast */
+        }
+
+        /* Glowing Text Animation for Nav Items */
+        @keyframes glowText { 0% { } 100% { } }
+
+        /* Styles for COLLAPSED Sidebar Navigation */
+        .sidebar-collapsed nav {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 0.5rem;
+        }
+        .sidebar-collapsed nav a, .sidebar-collapsed .dropdown {
+            width: calc(100% - 1rem);
+            margin-left: 0.5rem;
+            margin-right: 0.5rem;
+            display: flex;
+            justify-content: center;
+        }
+        .sidebar-collapsed nav .dropdown > button {
+            justify-content: center;
+        }
+        .sidebar-collapsed nav a i,
+        .sidebar-collapsed nav .dropdown button > i:first-child {
+            margin-right: 0 !important;
+        }
+        .sidebar-collapsed .nav-text,
+        .sidebar-collapsed .dropdown-chevron {
+            opacity: 0;
+            width: 0;
+            display: none;
+        }
+
+        /* Dropdown Specific */
+        .dropdown {
+            position: relative;
+        }
+        .sidebar-collapsed .dropdown {
+            overflow: visible;
+            position: relative;
+        }
+        .dropdown-chevron {
+            font-size: 0.75rem;
+            transition: transform 0.2s ease-in-out, color 0.3s ease-in-out;
+            margin-left: auto;
+            color: #d1d5db;
+        }
+        .dropdown > button:hover .dropdown-chevron {
+            color: #22d3ee;
+            text-shadow: 0 0 10px rgba(34, 211, 238, 0.7);
+        }
+        .dropdown-chevron.rotate-180 {
+            transform: rotate(180deg);
+        }
+        .dropdown-content {
+            display: none;
+            padding-left: 2.75rem;
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.3s ease-out;
+        }
+        .dropdown-content.show {
+            display: block;
+            max-height: 500px;
+            transition: max-height 0.3s ease-in;
+        }
+        .dropdown-content a {
+            padding: 0.5rem 1rem;
+            margin: 0.125rem 0;
+            font-size: 0.9rem;
+            display: block;
+            box-sizing: border-box;
+            width: 100%;
+            transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out, transform 0.3s ease-in-out;
+            color: #d1d5db;
+            border-radius: 0.375rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(5px);
+        }
+        .dropdown-content a:hover, .dropdown-content a.active {
+            background-color: rgba(29, 78, 216, 0.5);
+            color: #22d3ee;
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        .sidebar-collapsed .dropdown-content {
+            display: none !important;
+        }
+
+        /* Popout Menu Styles */
+        .popout-menu {
+            position: absolute;
+            left: 100%;
+            top: 0;
+            width: 220px;
+            background: linear-gradient(180deg, #1F2937 0%, #374151 50%, #4B5563 100%);
+            border-radius: 0 8px 8px 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            z-index: 1050;
+            padding: 10px;
+            display: none;
+            opacity: 0;
+            visibility: hidden;
+            margin-left: 2px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+        .popout-menu.show {
+            display: block;
+            opacity: 1;
+            visibility: visible;
+        }
+        .sidebar-collapsed .dropdown .popout-menu {
+            position: fixed;
+            left: 5rem;
+            top: auto;
+            z-index: 2000; /* Ensure it appears above other elements */
+        }
+        .popout-menu a {
+            display: block;
+            padding: 8px 12px;
+            margin: 0 0 5px 0;
+            color: #d1d5db;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            font-size: 0.9rem;
+            transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out, transform 0.3s ease-in-out;
+            white-space: nowrap;
+            position: relative;
+            z-index: 2001;
+        }
+        .popout-menu a:hover {
+            background-color: rgba(29, 78, 216, 0.5);
+            color: #22d3ee;
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        .popout-menu a:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Tooltip Styles */
+        .tooltip {
+            position: relative;
+        }
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            opacity: 0;
+            width: max-content;
+            max-width: 150px;
+            background-color: rgba(30, 58, 138, 0.9);
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 10px;
+            position: absolute;
+            z-index: 1002;
+            top: 50%;
+            left: 105%;
+            transform: translateY(-50%);
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+            transition-delay: 0.5s;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            pointer-events: none;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        .sidebar-collapsed .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        .sidebar-expanded .tooltip .tooltip-text {
+            display: none;
+        }
+
+        /* Main Content Styles */
+        .main-content {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 2rem;
+            margin-left: 16rem;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(20px);
+            border-radius: 0;
+            box-shadow: none;
+            border: none;
+            position: relative;
+            overflow: hidden;
+            min-height: 100vh;
+        }
+        
+        .main-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 25% 25%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(16, 185, 129, 0.04) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+        .main-content-collapsed {
+            margin-left: 5rem;
+        }
+        @media (max-width: 767px) {
+            .sidebar {
+                width: 5rem !important;
+                left: 0;
+                overflow: visible !important;
+            }
+            .sidebar-expanded {
+                width: 5rem !important;
+            }
+            .sidebar-collapsed {
+                width: 5rem !important;
+                overflow: visible !important;
+            }
+            .sidebar-header {
+                justify-content: center !important;
+                flex-direction: column !important;
+                height: auto !important;
+                padding: 0.5rem 0 !important;
+                gap: 0.5rem !important;
+            }
+            #logo {
+                opacity: 1 !important;
+                display: block !important;
+                writing-mode: vertical-rl !important;
+                transform: rotate(180deg) !important;
+                text-align: center !important;
+                margin: 0 auto !important;
+                padding: 3px 0 !important;
+                font-size: 1.25rem;
+                font-weight: 800 !important;
+                color: transparent !important;
+                background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 25%, #e0f2fe 50%, #bae6fd 75%, #7dd3fc 100%) !important;
+                background-size: 300% 300% !important;
+                -webkit-background-clip: text !important;
+                background-clip: text !important;
+                letter-spacing: 1px !important;
+                text-shadow: 
+                    0 0 12px rgba(255, 255, 255, 0.8),
+                    0 0 20px rgba(255, 255, 255, 0.6),
+                    0 0 28px rgba(255, 255, 255, 0.4),
+                    0 0 36px rgba(59, 130, 246, 0.3) !important;
+                animation: logoVibrant 4s ease-in-out infinite !important;
+            }
+            #sidebar-toggle {
+                order: 2 !important;
+                margin-top: 0.5rem !important;
+            }
+            .nav-text, .dropdown-chevron {
+                display: none !important;
+                opacity: 0 !important;
+            }
+            nav a, nav .dropdown > button {
+                justify-content: center !important;
+            }
+            nav a i, nav .dropdown button > i:first-child {
+                margin-right: 0 !important;
+            }
+            .sidebar-collapsed nav a, .sidebar-collapsed .dropdown {
+                justify-content: center;
+            }
+            .sidebar-collapsed .dropdown > button {
+                justify-content: center;
+            }
+            .main-content {
+                margin-left: 5rem !important;
+            }
+            .main-content-collapsed {
+                margin-left: 5rem !important;
+            }
+            .popout-menu {
+                display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+                left: -9999px !important;
+                pointer-events: auto;
+            }
+            .popout-menu.show {
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+            }
+            .dropdown-content {
+                display: none !important;
+                max-height: 0 !important;
+            }
+            .sidebar-collapsed .tooltip:hover .tooltip-text {
+                visibility: visible;
+                opacity: 1;
+            }
+        }
+        /* Animation */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideIn { from { transform: translateX(-10px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .animate-fade-in { animation: fadeIn 0.5s ease-in; }
+        .animate-slide-in { animation: slideIn 0.3s ease-in; }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div id="sidebar" class="sidebar text-gray-300 sidebar-expanded">
+        <div class="sidebar-header">
+            <h1 id="logo" class="text-white">AzurEye</h1>
+            <button id="sidebar-toggle" class="text-gray-300 focus:outline-none hover:text-white">
+                <i class="fas"></i>
+            </button>
+        </div>
+
+        <nav>
+            <a href="/" class="tooltip {% if request.path == '/' %}active{% endif %}">
+                <i class="fas fa-home"></i> <span class="nav-text">Home</span> <span class="tooltip-text">Home</span>
+            </a>
+            <a href="/dashboard" class="tooltip {% if request.path == '/dashboard' %}active{% endif %}">
+                <i class="fas fa-tachometer-alt"></i> <span class="nav-text">Dashboard</span> <span class="tooltip-text">Dashboard</span>
+            </a>
+            <a href="/visual_data" class="tooltip {% if request.path == '/visual_data' %}active{% endif %}">
+                <i class="fas fa-project-diagram"></i> <span class="nav-text">Visual Data</span> <span class="tooltip-text">Interactive Vulnerability Graph</span>
+            </a>
+            <div class="dropdown">
+                <button id="scan-dropdown-toggle" class="tooltip {% if request.path.startswith(('/key_vaults', '/storage_accounts', '/logic_app_standard', '/logic_app_consumption', '/function_app', '/automation')) %}active{% endif %}" role="button" aria-expanded="false" aria-controls="scan-dropdown scan-popout">
+                    <i class="fas fa-search"></i> <span class="nav-text">Scan</span> <i class="fas fa-chevron-down dropdown-chevron"></i> <span class="tooltip-text">Scan Options</span>
+                </button>
+                <div id="scan-dropdown" class="dropdown-content">
+                    <a href="/key_vaults" class="{% if request.path == '/key_vaults' %}active{% endif %}">Key Vaults</a>
+                    <a href="/storage_accounts" class="{% if request.path == '/storage_accounts' %}active{% endif %}">Storage Accounts</a>
+                    <a href="/logic_app_standard" class="{% if request.path == '/logic_app_standard' %}active{% endif %}">Logic Apps (Std)</a>
+                    <a href="/logic_app_consumption" class="{% if request.path == '/logic_app_consumption' %}active{% endif %}">Logic Apps (Cons)</a>
+                    <a href="/function_app" class="{% if request.path == '/function_app' %}active{% endif %}">Function Apps</a>
+                    <a href="/automation" class="{% if request.path == '/automation' %}active{% endif %}">Automation Accs</a>
+                </div>
+                <div id="scan-popout" class="popout-menu">
+                    <a href="/key_vaults">Key Vaults</a>
+                    <a href="/storage_accounts">Storage Accounts</a>
+                    <a href="/logic_app_standard">Logic Apps (Std)</a>
+                    <a href="/logic_app_consumption">Logic Apps (Cons)</a>
+                    <a href="/function_app">Function Apps</a>
+                    <a href="/automation">Automation Accs</a>
+                </div>
+            </div>
+            <a href="/role_assignments" class="tooltip {% if request.path == '/role_assignments' %}active{% endif %}">
+                <i class="fas fa-user-shield"></i> <span class="nav-text">Role Assignments</span> <span class="tooltip-text">Role Assignments</span>
+            </a>
+            <a href="/service_principal_roles" class="tooltip {% if request.path == '/service_principal_roles' %}active{% endif %}">
+                <i class="fas fa-users-cog"></i> <span class="nav-text">Service Principal Roles</span> <span class="tooltip-text">Service Principal Roles</span>
+            </a>
+            <a href="/subscriptions" class="tooltip {% if request.path == '/subscriptions' %}active{% endif %}">
+                <i class="fas fa-list-alt"></i> <span class="nav-text">Subscriptions</span> <span class="tooltip-text">Subscriptions</span>
+            </a>
+            <a href="/user_details" class="tooltip {% if request.path == '/user_details' %}active{% endif %}">
+                <i class="fas fa-user"></i> <span class="nav-text">User Details</span> <span class="tooltip-text">User Details</span>
+            </a>
+            <a href="/scan_history" class="tooltip {% if request.path == '/scan_history' %}active{% endif %}">
+                <i class="fas fa-history"></i> <span class="nav-text">Scan History</span> <span class="tooltip-text">Scan History</span>
+            </a>
+        </nav>
+    </div>
+
+    <div id="main-content" class="main-content">
+        {% block content %}
+        <h1>Page Content Area</h1>
+        <p>This is where the main content for each page will be displayed.</p>
+        {% endblock %}
+    </div>
+
+    <script>
+        // --- Element References ---
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const sidebarToggleIcon = sidebarToggle.querySelector('i');
+        const mainContent = document.getElementById('main-content');
+        const logo = document.getElementById('logo');
+        const scanDropdownToggle = document.getElementById('scan-dropdown-toggle');
+        const scanDropdown = document.getElementById('scan-dropdown');
+        const scanDropdownChevron = scanDropdownToggle.querySelector('.dropdown-chevron');
+        const scanPopout = document.getElementById('scan-popout');
+        const scanDropdownDiv = scanDropdownToggle.closest('.dropdown');
+        let popoutTimeoutId = null;
+        let resizeTimeout;
+        let isResizing = false;
+        let toggleCount = 0;
+
+        // --- Configuration ---
+        const iconCollapse = 'fa-chevron-left';
+        const iconExpand = 'fa-chevron-right';
+        
+        // --- Force Sidebar Color Consistency ---
+        function enforceSidebarColors() {
+            if (sidebar) {
+                sidebar.style.background = 'linear-gradient(180deg, #1e293b 0%, #334155 50%, #475569 100%)';
+                sidebar.style.borderRight = '3px solid #3b82f6';
+                sidebar.style.boxShadow = '0 4px 20px rgba(59, 130, 246, 0.15), 0 0 40px rgba(16, 185, 129, 0.1), inset 0 0 20px rgba(255, 255, 255, 0.05)';
+            }
+        }
+        
+        // Enforce colors on load
+        enforceSidebarColors();
+        const scanActivePaths = [
+            '/key_vaults', '/storage_accounts', '/logic_app_standard',
+            '/logic_app_consumption', '/function_app', '/automation'
+        ];
+        const REDRAW_THRESHOLD = 20;
+
+        // --- State Check ---
+        const isMobile = () => window.innerWidth < 768;
+
+        // --- Debounce Function ---
+        function debounce(func, wait) {
+            let timeout;
+            return function() {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    func();
+                }, wait);
+            };
+        }
+
+        // --- Function to Set the Toggle Icon ---
+        function setToggleIcon(isCollapsed) {
+            if (isCollapsed) {
+                sidebarToggleIcon.classList.remove(iconCollapse);
+                sidebarToggleIcon.classList.add(iconExpand);
+            } else {
+                sidebarToggleIcon.classList.remove(iconExpand);
+                sidebarToggleIcon.classList.add(iconCollapse);
+            }
+            if (!sidebarToggleIcon.classList.contains('fas')) {
+                sidebarToggleIcon.classList.add('fas');
+            }
+        }
+
+        // --- Global Resize Charts Function ---
+        window.resizeCharts = debounce(function() {
+            if (isResizing) return;
+            isResizing = true;
+            console.log("Resizing charts...");
+            try {
+                if (window.scannedChart) {
+                    if (window.scannedChart.canvas.offsetWidth === 0 || window.scannedChart.canvas.offsetHeight === 0) {
+                        console.log("Scanned chart canvas has zero size, redrawing...");
+                        if (window.updateCharts) {
+                            window.updateCharts(window.scan_stats, window.resource_distribution);
+                        }
+                    } else {
+                        window.scannedChart.resize();
+                    }
+                }
+                if (window.findingsChart) {
+                    if (window.findingsChart.canvas.offsetWidth === 0 || window.findingsChart.canvas.offsetHeight === 0) {
+                        console.log("Findings chart canvas has zero size, redrawing...");
+                        if (window.updateCharts) {
+                            window.updateCharts(window.scan_stats, window.resource_distribution);
+                        }
+                    } else {
+                        window.findingsChart.resize();
+                    }
+                }
+                if (window.distributionChart) {
+                    if (window.distributionChart.canvas.offsetWidth === 0 || window.distributionChart.canvas.offsetHeight === 0) {
+                        console.log("Distribution chart canvas has zero size, redrawing...");
+                        if (window.updateCharts) {
+                            window.updateCharts(window.scan_stats, window.resource_distribution);
+                        }
+                    } else {
+                        window.distributionChart.resize();
+                    }
+                }
+                toggleCount++;
+                if (toggleCount >= REDRAW_THRESHOLD) {
+                    console.log(`Toggle count reached ${REDRAW_THRESHOLD}, forcing chart redraw...`);
+                    if (window.updateCharts) {
+                        window.updateCharts(window.scan_stats, window.resource_distribution);
+                    }
+                    toggleCount = 0;
+                }
+            } catch (error) {
+                console.error("Error resizing charts:", error);
+                if (window.updateCharts) {
+                    window.updateCharts(window.scan_stats, window.resource_distribution);
+                }
+            } finally {
+                isResizing = false;
+            }
+        }, 500);
+
+        // --- Initial State Setup ---
+        function setInitialSidebarState() {
+            scanDropdown.classList.remove('show');
+            scanPopout.classList.remove('show');
+            if (scanDropdownChevron) scanDropdownChevron.classList.remove('rotate-180');
+            scanDropdownToggle.setAttribute('aria-expanded', 'false');
+            clearTimeout(popoutTimeoutId);
+
+            const forceCollapse = isMobile();
+            let isCurrentlyCollapsed;
+
+            if (forceCollapse) {
+                sidebar.classList.remove('sidebar-expanded');
+                sidebar.classList.add('sidebar-collapsed');
+                mainContent.classList.remove('main-content-expanded');
+                mainContent.classList.add('main-content-collapsed');
+                mainContent.style.marginLeft = '5rem';
+                if (logo) logo.style.display = 'block';
+                isCurrentlyCollapsed = true;
+                console.log("Mobile/Forced: Sidebar collapsed.");
+            } else {
+                const shouldBeCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+                if (shouldBeCollapsed) {
+                    sidebar.classList.remove('sidebar-expanded');
+                    sidebar.classList.add('sidebar-collapsed');
+                    mainContent.classList.remove('main-content-expanded');
+                    mainContent.classList.add('main-content-collapsed');
+                    mainContent.style.marginLeft = '5rem';
+                    if (logo) logo.style.display = 'block';
+                    isCurrentlyCollapsed = true;
+                    console.log("Desktop: Sidebar restored to collapsed.");
+                } else {
+                    sidebar.classList.remove('sidebar-collapsed');
+                    sidebar.classList.add('sidebar-expanded');
+                    mainContent.classList.remove('main-content-collapsed');
+                    mainContent.classList.remove('main-content-expanded');
+                    mainContent.style.marginLeft = '16rem';
+                    if (logo) logo.style.display = 'block';
+                    isCurrentlyCollapsed = false;
+                    console.log("Desktop: Sidebar restored/defaulted to expanded.");
+                }
+            }
+            setToggleIcon(isCurrentlyCollapsed);
+            updateScanActiveVisuals();
+            setTimeout(() => {
+                if (window.initCharts && window.location.pathname === '/dashboard') {
+                    window.initCharts();
+                }
+                window.resizeCharts();
+            }, 300);
+        }
+
+        // Helper to Update Active State Visuals
+        function updateScanActiveVisuals() {
+            const currentPath = window.location.pathname;
+            const isScanPathActive = scanActivePaths.some(path => currentPath.startsWith(path));
+
+            if (isScanPathActive) {
+                scanDropdownToggle.classList.add('active');
+                if (scanDropdown.classList.contains('show')) {
+                    scanDropdown.querySelectorAll('a').forEach(link => {
+                        if (link.getAttribute('href') === currentPath) {
+                            link.classList.add('active');
+                        } else {
+                            link.classList.remove('active');
+                        }
+                    });
+                }
+            } else {
+                scanDropdownToggle.classList.remove('active');
+                scanDropdown.querySelectorAll('a.active').forEach(link => link.classList.remove('active'));
+            }
+        }
+
+        // --- Sidebar Toggle ---
+        sidebarToggle.addEventListener('click', () => {
+            if (isMobile()) {
+                console.log("Sidebar toggle ignored on mobile.");
+                return;
+            }
+
+            const isCurrentlyCollapsed = sidebar.classList.contains('sidebar-collapsed');
+
+            scanDropdown.classList.remove('show');
+            scanPopout.classList.remove('show');
+            if (scanDropdownChevron) scanDropdownChevron.classList.remove('rotate-180');
+            clearTimeout(popoutTimeoutId);
+            scanDropdownToggle.setAttribute('aria-expanded', 'false');
+
+            if (isCurrentlyCollapsed) {
+                sidebar.classList.remove('sidebar-collapsed');
+                sidebar.classList.add('sidebar-expanded');
+                mainContent.classList.remove('main-content-collapsed');
+                mainContent.style.marginLeft = '16rem';
+                setToggleIcon(false);
+                localStorage.setItem('sidebarCollapsed', 'false');
+                console.log("Sidebar expanded via toggle");
+                if (window.location.pathname === '/dashboard' && !window.scannedChart) {
+                    if (window.initCharts) {
+                        window.initCharts();
+                    }
+                }
+            } else {
+                sidebar.classList.add('sidebar-collapsed');
+                sidebar.classList.remove('sidebar-expanded');
+                mainContent.classList.add('main-content-collapsed');
+                mainContent.style.marginLeft = '5rem';
+                setToggleIcon(true);
+                localStorage.setItem('sidebarCollapsed', 'true');
+                console.log("Sidebar collapsed via toggle");
+            }
+            setTimeout(() => {
+                window.resizeCharts();
+            }, 300);
+            
+            // Enforce sidebar colors after toggle
+            setTimeout(() => {
+                enforceSidebarColors();
+            }, 100);
+        });
+
+        // --- Scan Dropdown Toggle (Click - Expanded Sidebar) ---
+        scanDropdownToggle.addEventListener('click', (e) => {
+            if (sidebar.classList.contains('sidebar-expanded') && !isMobile()) {
+                e.stopPropagation();
+                scanDropdown.classList.toggle('show');
+                if (scanDropdownChevron) scanDropdownChevron.classList.toggle('rotate-180');
+                scanDropdownToggle.setAttribute('aria-expanded', scanDropdown.classList.contains('show'));
+                updateScanActiveVisuals();
+                console.log("Scan Dropdown toggled (Expanded Sidebar)");
+                scanPopout.classList.remove('show');
+                clearTimeout(popoutTimeoutId);
+            } else if (isMobile()) {
+                e.stopPropagation();
+                if (scanPopout.classList.contains('show')) {
+                    scanPopout.classList.remove('show');
+                    scanDropdownToggle.setAttribute('aria-expanded', 'false');
+                    console.log("Clicked Scan area (Mobile, Collapsed) - Hide Popout");
+                } else {
+                    const buttonRect = scanDropdownToggle.getBoundingClientRect();
+                    const sidebarRect = sidebar.getBoundingClientRect();
+                    scanPopout.style.left = `${sidebarRect.right}px`;
+                    scanPopout.style.top = `${buttonRect.top}px`;
+                    scanPopout.classList.add('show');
+                    scanDropdownToggle.setAttribute('aria-expanded', 'true');
+                    console.log("Clicked Scan area (Mobile, Collapsed) - Show Popout");
+                }
+            }
+        });
+
+        // --- Scan Popout (Hover - Collapsed Sidebar) ---
+        scanDropdownDiv.addEventListener('mouseenter', () => {
+            if (sidebar.classList.contains('sidebar-collapsed') && !isMobile()) {
+                console.log("Mouse entered Scan area (Collapsed) - Attempting to show popout");
+                clearTimeout(popoutTimeoutId);
+                const buttonRect = scanDropdownToggle.getBoundingClientRect();
+                const sidebarRect = sidebar.getBoundingClientRect();
+                scanPopout.style.left = `${sidebarRect.right}px`;
+                scanPopout.style.top = `${buttonRect.top}px`;
+                scanPopout.classList.add('show');
+                scanDropdownToggle.setAttribute('aria-expanded', 'true');
+                console.log("Popout should now be visible. Class 'show' added:", scanPopout.classList.contains('show'));
+            }
+        });
+
+        scanDropdownDiv.addEventListener('mouseleave', () => {
+            if (sidebar.classList.contains('sidebar-collapsed') && !isMobile()) {
+                console.log("Mouse left Scan area (Collapsed) - Scheduling popout hide");
+                popoutTimeoutId = setTimeout(() => {
+                    scanPopout.classList.remove('show');
+                    scanDropdownToggle.setAttribute('aria-expanded', 'false');
+                    console.log("Popout should now be hidden. Class 'show' removed:", !scanPopout.classList.contains('show'));
+                }, 150);
+            }
+        });
+
+        // --- Click Outside Listener (Dropdowns/Popouts) ---
+        document.addEventListener('click', (e) => {
+            if (sidebar.classList.contains('sidebar-expanded') && !isMobile() && scanDropdown.classList.contains('show')) {
+                if (!scanDropdownDiv.contains(e.target)) {
+                    scanDropdown.classList.remove('show');
+                    if (scanDropdownChevron) scanDropdownChevron.classList.remove('rotate-180');
+                    scanDropdownToggle.setAttribute('aria-expanded', 'false');
+                    console.log("Clicked outside - Hide Dropdown (Expanded)");
+                }
+            }
+            if (isMobile() && scanPopout.classList.contains('show')) {
+                if (!scanDropdownDiv.contains(e.target)) {
+                    scanPopout.classList.remove('show');
+                    scanDropdownToggle.setAttribute('aria-expanded', 'false');
+                    console.log("Clicked outside - Hide Popout (Mobile, Collapsed)");
+                }
+            }
+        });
+
+        // --- Keyboard Navigation for Scan Toggle ---
+        scanDropdownToggle.addEventListener('keydown', (e) => {
+            if (sidebar.classList.contains('sidebar-collapsed') && !isMobile()) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (scanPopout.classList.contains('show')) {
+                        scanPopout.classList.remove('show');
+                        scanDropdownToggle.setAttribute('aria-expanded', 'false');
+                    } else {
+                        const buttonRect = scanDropdownToggle.getBoundingClientRect();
+                        const sidebarRect = sidebar.getBoundingClientRect();
+                        scanPopout.style.left = `${sidebarRect.right}px`;
+                        scanPopout.style.top = `${buttonRect.top}px`;
+                        scanPopout.classList.add('show');
+                        scanDropdownToggle.setAttribute('aria-expanded', 'true');
+                    }
+                } else if (e.key === 'Escape' && scanPopout.classList.contains('show')) {
+                    scanPopout.classList.remove('show');
+                    scanDropdownToggle.setAttribute('aria-expanded', 'false');
+                    scanDropdownToggle.focus();
+                }
+            }
+            if (sidebar.classList.contains('sidebar-expanded') && !isMobile()) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    scanDropdown.classList.toggle('show');
+                    if (scanDropdownChevron) scanDropdownChevron.classList.toggle('rotate-180');
+                    scanDropdownToggle.setAttribute('aria-expanded', scanDropdown.classList.contains('show'));
+                } else if (e.key === 'Escape' && scanDropdown.classList.contains('show')) {
+                    scanDropdown.classList.remove('show');
+                    if (scanDropdownChevron) scanDropdownChevron.classList.remove('rotate-180');
+                    scanDropdownToggle.setAttribute('aria-expanded', 'false');
+                    scanDropdownToggle.focus();
+                }
+            }
+        });
+
+        // --- Window Resize Listener ---
+        window.addEventListener('resize', debounce(() => {
+            console.log("Window resized");
+            setInitialSidebarState();
+            window.resizeCharts();
+        }, 100));
+
+        // --- Initial Setup Call ---
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("DOM Loaded - Setting initial state");
+            setInitialSidebarState();
+            
+            // Enforce sidebar colors on page load
+            setTimeout(() => {
+                enforceSidebarColors();
+            }, 100);
+        });
+    </script>
+</body>
+</html>

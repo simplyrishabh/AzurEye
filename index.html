@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}AzurEye{% endblock %}
+{% block content %}
+    <!-- Hero Section -->
+    <div class="bg-gradient-to-r from-blue-900 to-gray-800 border-4 border-blue-600 p-8 rounded-lg shadow-lg mb-6 animate-fade-in">
+        <h1 class="text-4xl font-bold text-cyan-400">Welcome to AzurEye</h1>
+        <h2 class="text-xl text-gray-300 mt-2">Secure Your Azure with AzurEye</h2>
+        <p class="text-gray-400 mt-4">
+            AzurEye is a powerful Azure auditing tool designed to help you assess and secure your Azure resources. It provides detailed insights into various Azure modules, including Function Apps, Logic Apps (Standard and Consumption), Storage Accounts, and Key Vaults, along with general information like role assignments, subscriptions, and user details.
+        </p>
+        <a href="/dashboard" class="mt-6 inline-block bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition duration-200 hover:shadow-lg active:scale-95 hover-scale">Start Exploring</a>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <a href="/function_app" class="bg-gray-700 p-4 rounded-lg border-2 border-blue-600 hover:border-blue-400 transition duration-200 hover-scale">
+            <div class="flex items-center">
+                <i class="fas fa-code text-cyan-400 text-2xl mr-2"></i>
+                <h3 class="text-lg text-gray-300">Function App</h3>
+            </div>
+        </a>
+        <a href="/logic_app_standard" class="bg-gray-700 p-4 rounded-lg border-2 border-blue-600 hover:border-blue-400 transition duration-200 hover-scale">
+            <div class="flex items-center">
+                <i class="fas fa-cogs text-cyan-400 text-2xl mr-2"></i>
+                <h3 class="text-lg text-gray-300">Logic App Standard</h3>
+            </div>
+        </a>
+        <a href="/logic_app_consumption" class="bg-gray-700 p-4 rounded-lg border-2 border-blue-600 hover:border-blue-400 transition duration-200 hover-scale">
+            <div class="flex items-center">
+                <i class="fas fa-cogs text-cyan-400 text-2xl mr-2"></i>
+                <h3 class="text-lg text-gray-300">Logic App Consumption</h3>
+            </div>
+        </a>
+        <a href="/key_vaults" class="bg-gray-700 p-4 rounded-lg border-2 border-blue-600 hover:border-blue-400 transition duration-200 hover-scale">
+            <div class="flex items-center">
+                <i class="fas fa-lock text-cyan-400 text-2xl mr-2"></i>
+                <h3 class="text-lg text-gray-300">Key Vaults</h3>
+            </div>
+        </a>
+    </div>
+
+    <!-- Basic Stats -->
+    <div class="bg-gray-700 p-4 rounded-lg border-2 border-blue-600 mb-6">
+        <h3 class="text-lg text-cyan-300">Stats Overview</h3>
+        <p id="stats-overview" class="text-gray-400">Loading stats...</p>
+        <a href="/dashboard" class="text-cyan-400 hover:text-cyan-300 mt-2 inline-block">Click for more info</a>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="bg-gray-700 p-4 rounded-lg border-2 border-blue-600">
+        <h3 class="text-lg text-cyan-300 mb-4">Recent Activity</h3>
+        {% if recent_scans %}
+            <ul class="space-y-2">
+                {% for scan in recent_scans %}
+                    <li class="flex items-center text-gray-400 hover:text-gray-300 transition duration-200">
+                        <i class="fas fa-history mr-2 {% if scan.has_findings %}text-red-600{% else %}text-green-600{% endif %}"></i>
+                        <span>Scanned {{ scan.service_type | escape }} in {{ scan.subscription_id | escape }} at {{ scan.timestamp | escape }} - 
+                            {% if scan.has_findings %}
+                                <span class="text-red-600">Findings Detected</span>
+                            {% else %}
+                                <span class="text-green-600">No Findings</span>
+                            {% endif %}
+                        </span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-gray-400">No recent activity. Start a scan to see your activity here!</p>
+        {% endif %}
+    </div>
+
+    <script>
+        // Fetch stats asynchronously after the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/fetch_stats')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        const stats = data.stats;
+                        document.getElementById('stats-overview').textContent = 
+                            `Subscriptions: ${stats.subscriptions} | Key Vaults: ${stats.keyvaults} | Storage Accounts: ${stats.storage} | Logic Apps (Standard): ${stats.logicapps} | Logic Apps (Cons.): ${stats.logicapps_consumption} | Function Apps: ${stats.functionapps}`;
+                    } else {
+                        document.getElementById('stats-overview').textContent = 'Error loading stats: ' + data.message;
+                        document.getElementById('stats-overview').classList.add('text-red-500');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching stats:', error);
+                    document.getElementById('stats-overview').textContent = 'Error loading stats.';
+                    document.getElementById('stats-overview').classList.add('text-red-500');
+                });
+        });
+    </script>
+{% endblock %}

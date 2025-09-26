@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Subscriptions{% endblock %}
+{% block content %}
+    <h1 class="text-3xl font-bold text-gray-300 mb-6"><i class="fas fa-list mr-2 text-cyan-400"></i> Subscriptions</h1>
+    
+    <!-- Loading State -->
+    <div id="loading-state" class="bg-gray-700 rounded-lg shadow-lg p-6">
+        <div class="flex items-center justify-center">
+            <svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <div class="text-center">
+                <p class="text-cyan-400 text-lg font-semibold">Fetching Subscriptions...</p>
+                <p class="text-gray-400 text-sm mt-1">⏱️ This may take 5-15 seconds</p>
+                <p id="loading-progress" class="text-gray-400 text-sm mt-1">📊 Checking Azure access...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content State -->
+    <div id="content-state" class="bg-gray-700 rounded-lg shadow-lg p-6 hidden">
+        <div id="subscriptions-content">
+            <!-- Content will be loaded here -->
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const loadingState = document.getElementById('loading-state');
+            const contentState = document.getElementById('content-state');
+            const loadingProgress = document.getElementById('loading-progress');
+            const contentDiv = document.getElementById('subscriptions-content');
+
+            // Show progress updates
+            let progressCounter = 0;
+            const progressMessages = [
+                '📊 Checking Azure access...',
+                '🔍 Discovering subscriptions...',
+                '📈 Processing data...',
+                '⏳ Finalizing results...'
+            ];
+
+            const progressInterval = setInterval(() => {
+                progressCounter = (progressCounter + 1) % progressMessages.length;
+                loadingProgress.textContent = progressMessages[progressCounter];
+            }, 1500);
+
+            // Fetch subscriptions
+            fetch('/get_subscriptions')
+                .then(response => response.json())
+                .then(data => {
+                    clearInterval(progressInterval);
+                    
+                    if (data.subscriptions !== undefined) {
+                        // Hide loading, show content
+                        loadingState.classList.add('hidden');
+                        contentState.classList.remove('hidden');
+                        
+                        if (data.subscriptions.length > 0) {
+                            // Build table HTML
+                            let tableHTML = `
+                                <table class="w-full text-left">
+                                    <thead>
+                                        <tr class="bg-blue-600 text-white">
+                                            <th class="p-4">Subscription ID</th>
+                                            <th class="p-4">Name</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                            `;
+                            
+                            data.subscriptions.forEach(sub => {
+                                tableHTML += `
+                                    <tr class="border-b border-gray-600 hover:bg-gray-600">
+                                        <td class="p-4 text-gray-300">${sub.id || 'N/A'}</td>
+                                        <td class="p-4 text-gray-400">${sub.name || 'N/A'}</td>
+                                    </tr>
+                                `;
+                            });
+                            
+                            tableHTML += `
+                                    </tbody>
+                                </table>
+                            `;
+                            
+                            contentDiv.innerHTML = tableHTML;
+                        } else {
+                            contentDiv.innerHTML = '<p class="text-gray-400">No subscriptions found. Please ensure you are authenticated with \'az login\'.</p>';
+                        }
+                    } else if (data.error) {
+                        clearInterval(progressInterval);
+                        loadingState.classList.add('hidden');
+                        contentState.classList.remove('hidden');
+                        contentDiv.innerHTML = `<p class="text-red-400">Error loading subscriptions: ${data.error}</p>`;
+                    }
+                })
+                .catch(error => {
+                    clearInterval(progressInterval);
+                    console.error('Error fetching subscriptions:', error);
+                    loadingState.classList.add('hidden');
+                    contentState.classList.remove('hidden');
+                    contentDiv.innerHTML = '<p class="text-red-400">Error loading subscriptions. Please try again.</p>';
+                });
+        });
+    </script>
+{% endblock %}

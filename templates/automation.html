@@ -1,0 +1,424 @@
+{% extends "base.html" %}
+{% block title %}Automation Accounts{% endblock %}
+{% block content %}
+    <h1 class="text-3xl font-bold text-gray-300 mb-6 animate-fade-in"><i class="fas fa-robot mr-2 text-cyan-400"></i> Automation Accounts</h1>
+    <button id="start-automation-scan" class="mb-6 bg-gray-500 text-white px-6 py-2 rounded-full cursor-not-allowed transition duration-200 flex items-center" disabled>
+        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span id="fetching-text">Fetching Automation Accounts...</span>
+    </button>
+    <div id="fetching-status" class="mb-4 text-sm text-gray-400">
+        <p>⏱️ This may take 30-60 seconds in larger environments</p>
+        <p id="subscription-progress" class="mt-1">📊 Checking subscriptions...</p>
+    </div>
+    <div id="scan-status" class="mb-6 hidden">
+        <!-- Progress Tracker -->
+        <div class="flex justify-between mb-4">
+            <div class="text-center">
+                <div class="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-gray-300" id="step-1">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <p class="text-sm text-gray-400 mt-1">Scanning Automation Accounts</p>
+            </div>
+            <div class="text-center">
+                <div class="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-gray-300" id="step-2">
+                    <i class="fas fa-search"></i>
+                </div>
+                <p class="text-sm text-gray-400 mt-1">Analyzing Security</p>
+            </div>
+            <div class="text-center">
+                <div class="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-gray-300" id="step-3">
+                    <i class="fas fa-check"></i>
+                </div>
+                <p class="text-sm text-gray-400 mt-1">Generating Report</p>
+            </div>
+        </div>
+        <p class="text-yellow-600 flex items-center justify-center">
+            <svg class="h-5 w-5 mr-2 animate-spin" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="url(#gradient)" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8h8a8 8 0 01-16 0z"></path>
+                <defs>
+                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#00BCD4;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#10B981;stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+            </svg>
+            <span class="text-lg font-semibold">Scanning in Progress...</span>
+            <span id="timer" class="ml-2 text-gray-400"> (0s elapsed)</span>
+        </p>
+        <div class="w-full bg-gray-600 rounded-full h-2.5 mt-2">
+            <div id="progress-bar" class="bg-cyan-400 h-2.5 rounded-full" style="width: 0%"></div>
+        </div>
+        <p id="progress-text" class="text-sm text-gray-400 mt-1 text-center">0/{{ total_accounts }} Automation Accounts scanned (0%)</p>
+    </div>
+    <div id="automation-results" class="space-y-6"></div>
+
+    <div id="toast" class="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow-lg hidden animate-slide-in"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let totalAccounts = 0;
+        let scanRequested = false; // Track if user clicked scan while loading
+        
+        // Fetch total Automation Accounts count asynchronously after page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const subscriptionProgress = document.getElementById('subscription-progress');
+            const fetchingText = document.getElementById('fetching-text');
+            const fetchingStatus = document.getElementById('fetching-status');
+            
+            // Show initial progress
+            subscriptionProgress.textContent = '📊 Checking subscriptions...';
+            
+            // Simulate progress updates to show activity
+            let progressCounter = 0;
+            const progressInterval = setInterval(() => {
+                progressCounter++;
+                if (progressCounter === 1) {
+                    subscriptionProgress.textContent = '📊 Checking subscriptions...';
+                } else if (progressCounter === 2) {
+                    subscriptionProgress.textContent = '🔍 Discovering Automation Accounts...';
+                } else if (progressCounter === 3) {
+                    subscriptionProgress.textContent = '📈 Counting resources...';
+                } else if (progressCounter === 4) {
+                    subscriptionProgress.textContent = '⏳ Finalizing count...';
+                } else {
+                    progressCounter = 0; // Reset counter
+                }
+            }, 2000); // Update every 2 seconds
+            
+            fetch('/get_total_automation_accounts')
+                .then(response => response.json())
+                .then(data => {
+                    clearInterval(progressInterval); // Stop progress updates
+                    
+                    if (data.total_accounts !== undefined) {
+                        totalAccounts = data.total_accounts;
+                        const scanButton = document.getElementById('start-automation-scan');
+                        const progressText = document.getElementById('progress-text');
+                        
+                        // Hide fetching status and enable scan button
+                        fetchingStatus.style.display = 'none';
+                        scanButton.disabled = false;
+                        scanButton.innerHTML = 'Start Scan';
+                        scanButton.className = 'mb-6 bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition duration-200 hover:shadow-lg active:scale-95 hover-scale';
+                        progressText.textContent = `0/${totalAccounts} Automation Accounts scanned (0%)`;
+                        
+                        console.log(`Total Automation Accounts loaded: ${totalAccounts}`);
+                        
+                        // If user clicked scan while loading, start scan now
+                        if (scanRequested) {
+                            scanRequested = false;
+                            scanButton.click();
+                        }
+                    } else if (data.error) {
+                        clearInterval(progressInterval);
+                        console.error('Error loading total Automation Accounts count:', data.error);
+                        const scanButton = document.getElementById('start-automation-scan');
+                        fetchingStatus.style.display = 'none';
+                        scanButton.disabled = false;
+                        scanButton.innerHTML = 'Start Scan (Count Unavailable)';
+                        scanButton.className = 'mb-6 bg-yellow-600 text-white px-6 py-2 rounded-full hover:bg-yellow-700 transition duration-200 hover:shadow-lg active:scale-95 hover-scale';
+                    }
+                })
+                .catch(error => {
+                    clearInterval(progressInterval);
+                    console.error('Error fetching total Automation Accounts count:', error);
+                    const scanButton = document.getElementById('start-automation-scan');
+                    fetchingStatus.style.display = 'none';
+                    scanButton.disabled = false;
+                    scanButton.innerHTML = 'Start Scan (Count Unavailable)';
+                    scanButton.className = 'mb-6 bg-yellow-600 text-white px-6 py-2 rounded-full hover:bg-yellow-700 transition duration-200 hover:shadow-lg active:scale-95 hover-scale';
+                });
+        });
+
+        document.getElementById('start-automation-scan').addEventListener('click', function() {
+            console.log('Start Scan button clicked');
+
+            // If button is disabled (still loading total count), just set flag and return
+            if (this.disabled) {
+                scanRequested = true;
+                return;
+            }
+            const status = document.getElementById('scan-status');
+            const resultsDiv = document.getElementById('automation-results');
+            const timer = document.getElementById('timer');
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+            const toast = document.getElementById('toast');
+            // totalAccounts is now loaded dynamically
+
+            // Reset UI for rescan
+            status.classList.remove('hidden');
+            resultsDiv.innerHTML = '';
+            progressBar.style.width = '0%';
+            progressText.textContent = `0/${totalAccounts} Automation Accounts scanned (0%)`;
+            this.textContent = 'Start Scan';
+            this.disabled = true;
+
+            // Reset progress tracker
+            document.getElementById('step-1').classList.remove('bg-green-600', 'text-white');
+            document.getElementById('step-2').classList.remove('bg-green-600', 'text-white');
+            document.getElementById('step-3').classList.remove('bg-green-600', 'text-white');
+            document.getElementById('step-1').classList.add('bg-gray-600', 'text-gray-300');
+            document.getElementById('step-2').classList.add('bg-gray-600', 'text-gray-300');
+            document.getElementById('step-3').classList.add('bg-gray-600', 'text-gray-300');
+
+            let seconds = 0;
+            const interval = setInterval(() => {
+                seconds++;
+                timer.textContent = `(${seconds}s elapsed)`;
+            }, 1000);
+
+            const results = { subscriptions: {} };
+            const source = new EventSource('/scan_automation_stream');
+
+            source.onopen = function() {
+                console.log('Connection to scan_automation_stream established');
+                // Step 1: Scanning Automation Accounts
+                document.getElementById('step-1').classList.remove('bg-gray-600', 'text-gray-300');
+                document.getElementById('step-1').classList.add('bg-green-600', 'text-white');
+            };
+
+            source.onmessage = function(event) {
+                console.log('Received event data:', event.data);
+                const data = JSON.parse(event.data);
+                if (data.type === 'account') {
+                    if (!results.subscriptions[data.subscription]) {
+                        results.subscriptions[data.subscription] = {};
+                    }
+                    results.subscriptions[data.subscription] = { ...results.subscriptions[data.subscription], ...data.account };
+                    // Save to database
+                    const accountName = Object.keys(data.account)[0];
+                    const accountData = data.account[accountName];
+                    const hasFindings = accountData.sensitive_data && accountData.sensitive_data.length > 0;
+                    fetch('/save_scan_result', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            subscription_id: data.subscription,
+                            service_type: 'Automation Account',
+                            service_name: accountName,
+                            has_findings: hasFindings ? 1 : 0
+                        })
+                    });
+                    updateResults();
+                    // Step 2: Analyzing Security
+                    document.getElementById('step-2').classList.remove('bg-gray-600', 'text-gray-300');
+                    document.getElementById('step-2').classList.add('bg-green-600', 'text-white');
+                    progressBar.style.width = `${data.progress.percentage}%`;
+                    progressText.textContent = `${data.progress.accounts_processed}/${totalAccounts} Automation Accounts scanned (${data.progress.percentage}%)`;
+                } else if (data.type === 'subscription_complete') {
+                    if (!results.subscriptions[data.subscription]) {
+                        results.subscriptions[data.subscription] = {};
+                    }
+                    results.subscriptions[data.subscription] = { ...results.subscriptions[data.subscription], ...data.accounts };
+                    updateResults();
+                } else if (data.type === 'summary') {
+                    console.log('Summary received:', data);
+                    clearInterval(interval);
+                    status.classList.add('hidden');
+                    results.total_subs = data.total_subs;
+                    results.total_accounts = data.total_accounts;
+                    results.total_findings = data.total_findings;
+                    results.elapsed_time = data.elapsed_time;
+                    // Step 3: Generating Report
+                    document.getElementById('step-3').classList.remove('bg-gray-600', 'text-gray-300');
+                    document.getElementById('step-3').classList.add('bg-green-600', 'text-white');
+                    updateResults(true);
+                    showToast('Scan Completed!');
+                    source.close();
+                    document.getElementById('start-automation-scan').textContent = 'Re-scan';
+                    document.getElementById('start-automation-scan').disabled = false;
+
+                    document.getElementById('export-automation').addEventListener('click', function() {
+                        // Show loading state
+                        this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Generating Report...';
+                        this.disabled = true;
+                        
+                        fetch('/export_automation', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(results)
+                        })
+                        .then(response => response.json())
+                        .then(result => {
+                            if (result.status === 'success') {
+                                showToast('HTML Report Generated!');
+                                document.getElementById('export-automation-status').textContent = `Report saved as: ${result.filename}`;
+                                document.getElementById('export-automation-status').classList.remove('hidden');
+                                
+                                // Reset button
+                                this.innerHTML = '<i class="fas fa-file-export mr-2"></i> Export HTML Report for this scan';
+                                this.disabled = false;
+                            } else {
+                                showToast('Export Failed: ' + result.message);
+                                this.innerHTML = '<i class="fas fa-file-export mr-2"></i> Export HTML Report for this scan';
+                                this.disabled = false;
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Export error:', error);
+                            showToast('Export Failed: ' + error.message);
+                            this.innerHTML = '<i class="fas fa-file-export mr-2"></i> Export HTML Report for this scan';
+                            this.disabled = false;
+                        });
+                    });
+                } else if (data.error) {
+                    console.error('Error received from stream:', data.error);
+                    clearInterval(interval);
+                    status.classList.add('hidden');
+                    resultsDiv.innerHTML = `<p class="text-red-500 flex items-center"><i class="fas fa-exclamation-circle mr-2"></i> ${data.error}</p>`;
+                    source.close();
+                    document.getElementById('start-automation-scan').textContent = 'Re-scan';
+                    document.getElementById('start-automation-scan').disabled = false;
+                }
+            };
+
+            source.onerror = function() {
+                console.error('EventSource error occurred');
+                clearInterval(interval);
+                status.classList.add('hidden');
+                resultsDiv.innerHTML = `<p class="text-red-500 flex items-center"><i class="fas fa-exclamation-circle mr-2"></i> An error occurred during the scan.</p>`;
+                source.close();
+                document.getElementById('start-automation-scan').textContent = 'Re-scan';
+                document.getElementById('start-automation-scan').disabled = false;
+            };
+
+            function updateResults(isComplete = false) {
+                let html = '';
+                if (isComplete) {
+                    // Summary Card with Pie Chart
+                    html += `
+                        <div class="bg-gray-700 rounded-lg shadow-lg p-6 mb-6 border-l-4 border-cyan-400">
+                            <h3 class="text-xl font-semibold text-gray-300 mb-4">Scan Summary</h3>
+                            <div class="flex flex-col md:flex-row items-center">
+                                <div class="w-full md:w-1/3 mb-4 md:mb-0">
+                                    <canvas id="summary-chart" height="150"></canvas>
+                                </div>
+                                <div class="w-full md:w-2/3 md:pl-6">
+                                    <p class="text-gray-400">Subscriptions Analyzed: ${results.total_subs}</p>
+                                    <p class="text-gray-400">Automation Accounts Processed: ${results.total_accounts}</p>
+                                    <p class="text-gray-400">Automation Accounts with Findings: ${results.total_findings}</p>
+                                    <p class="text-gray-400">Time Taken: ${results.elapsed_time} seconds</p>
+                                    <p class="text-green-600">Results saved to 'results/automation'</p>
+                                </div>
+                            </div>
+                        </div>`;
+                }
+                for (const [sub_id, accounts] of Object.entries(results.subscriptions)) {
+                    html += `
+                        <div class="bg-gray-700 rounded-lg shadow-lg p-6 border-l-4 border-blue-600 hover:shadow-xl transition-shadow duration-200">
+                            <h3 class="text-xl font-semibold text-gray-300 cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')">${sub_id} <span class="text-sm text-gray-500">(${Object.keys(accounts).length} Automation Accounts)</span></h3>
+                            <div class="grid grid-cols-1 gap-4 mt-2">
+                    `;
+                    for (const [acct_name, acct_data] of Object.entries(accounts)) {
+                        const hasFindings = acct_data.sensitive_data && acct_data.sensitive_data.length > 0;
+                        const hasRunbookFindings = Object.values(acct_data.runbooks).some(r => r.sensitive_data && r.sensitive_data.length > 0);
+                        html += `
+                            <div class="border-l-4 border-blue-600 p-4 rounded-lg bg-gray-600 hover:shadow-xl transition-shadow duration-200">
+                                <h4 class="text-lg font-medium text-gray-300">${acct_name}</h4>
+                                <p class="text-gray-400">Resource Group: ${acct_data.resource_group}</p>
+                                <div class="flex space-x-4 mt-2 border-b border-gray-500">
+                                    <button class="tab ${hasFindings || hasRunbookFindings ? 'border-b-2 border-cyan-400 text-cyan-400' : 'text-gray-400'} pb-2 px-4 focus:outline-none" data-tab="runbooks-${acct_name}">Runbooks${hasRunbookFindings ? `<span class="ml-2 bg-red-600 text-white text-xs rounded-full px-2 py-1">${Object.values(acct_data.runbooks).filter(r => r.sensitive_data && r.sensitive_data.length > 0).length}</span>` : ''}</button>
+                                    <button class="tab ${hasFindings ? 'text-cyan-400' : 'text-gray-400'} pb-2 px-4 focus:outline-none" data-tab="sensitive-data-${acct_name}">Sensitive Data${hasFindings ? `<span class="ml-2 bg-red-600 text-white text-xs rounded-full px-2 py-1">${acct_data.sensitive_data.length}</span>` : ''}</button>
+                                </div>
+                                <div id="runbooks-${acct_name}" class="tab-content mt-4">
+                                    <div class="p-2 bg-gray-800 rounded-lg ${hasRunbookFindings ? 'border border-red-600' : 'border border-gray-600'}">
+                                        ${Object.keys(acct_data.runbooks).length > 0 ? `
+                                            <ul class="list-disc list-inside text-gray-400">
+                                                ${Object.entries(acct_data.runbooks).map(([name, info]) => {
+                                                    if (info.error) {
+                                                        return `<li class="text-red-600" style="text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);">${name}: ${info.error}</li>`;
+                                                    } else if (info.none) {
+                                                        return `<li>${info.none}</li>`;
+                                                    } else {
+                                                        return `<li class="${info.sensitive_data && info.sensitive_data.length > 0 ? 'text-red-600' : ''}" style="${info.sensitive_data && info.sensitive_data.length > 0 ? 'text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);' : ''}">${name} (State: ${info.state}, Type: ${info.type})${info.sensitive_data && info.sensitive_data.length > 0 ? ` - Sensitive Data Found` : ' - No Sensitive Data Found'}</li>`;
+                                                    }
+                                                }).join('')}
+                                            </ul>
+                                        ` : '<p class="text-green-600">No runbooks found</p>'}
+                                    </div>
+                                </div>
+                                <div id="sensitive-data-${acct_name}" class="tab-content mt-4 hidden">
+                                    <div class="p-2 bg-gray-800 rounded-lg ${hasFindings ? 'border border-red-600' : 'border border-gray-600'}">
+                                        ${hasFindings ? `
+                                            <div class="space-y-4">
+                                                ${Object.entries(acct_data.runbooks).map(([runbook_name, runbook_info]) => {
+                                                    if (runbook_info.sensitive_data && runbook_info.sensitive_data.length > 0) {
+                                                        return `
+                                                            <div class="border-l-4 border-red-500 pl-4">
+                                                                <h5 class="text-cyan-400 font-semibold mb-2">📄 ${runbook_name}</h5>
+                                                                <p class="text-gray-400 text-sm mb-2">State: ${runbook_info.state} | Type: ${runbook_info.type}</p>
+                                                                <ul class="list-disc list-inside text-red-600" style="text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);">
+                                                                    ${runbook_info.sensitive_data.map(finding => `<li>${finding}</li>`).join('')}
+                                                                </ul>
+                                                            </div>
+                                                        `;
+                                                    }
+                                                    return '';
+                                                }).filter(html => html).join('')}
+                                            </div>
+                                        ` : '<p class="text-green-600">No sensitive data found</p>'}
+                                    </div>
+                                </div>
+                            </div>`;
+                    }
+                    html += `</div></div>`;
+                }
+                if (isComplete) {
+                    html += `
+                        <button id="export-automation" class="mt-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-full hover:from-blue-700 hover:to-purple-700 transition duration-200 hover:shadow-lg active:scale-95 hover-scale flex items-center">
+                            <i class="fas fa-file-export mr-2"></i> Export HTML Report for this scan
+                        </button>
+                        <p id="export-automation-status" class="mt-2 text-green-600 hidden">HTML report generated successfully!</p>`;
+                }
+                resultsDiv.innerHTML = html;
+
+                // Initialize pie chart for summary
+                if (isComplete) {
+                    const ctx = document.getElementById('summary-chart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'pie',
+                        data: {
+                            labels: ['With Findings', 'Without Findings'],
+                            datasets: [{
+                                data: [results.total_findings, results.total_accounts - results.total_findings],
+                                backgroundColor: ['#EF4444', '#10B981'],
+                                borderColor: ['#B91C1C', '#059669'],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            plugins: {
+                                legend: { labels: { color: '#E0E0E0' } }
+                            }
+                        }
+                    });
+                }
+
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        const tabName = this.getAttribute('data-tab');
+                        const card = this.closest('.border-l-4');
+                        card.querySelectorAll('.tab').forEach(t => {
+                            t.classList.remove('border-b-2', 'border-cyan-400', 'text-cyan-400');
+                            t.classList.add('text-gray-400');
+                        });
+                        card.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+                        this.classList.add('border-b-2', 'border-cyan-400', 'text-cyan-400');
+                        document.getElementById(tabName).classList.remove('hidden');
+                    });
+                });
+            }
+
+            function showToast(message) {
+                toast.textContent = message;
+                toast.classList.remove('hidden');
+                setTimeout(() => toast.classList.add('hidden'), 3000);
+            }
+        });
+    </script>
+{% endblock %}

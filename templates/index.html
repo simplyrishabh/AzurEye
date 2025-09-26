@@ -1,0 +1,468 @@
+{% extends "base.html" %}
+{% block title %}AzurEye{% endblock %}
+{% block content %}
+    <div class="w-full">
+        <!-- Hero Section - Conference Ready -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl shadow-2xl mb-12 border border-gray-700">
+            <!-- Subtle Background Pattern -->
+            <div class="absolute inset-0 opacity-5">
+                <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-500/10 to-transparent"></div>
+                <div class="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-tl from-green-500/10 to-transparent rounded-full -translate-y-48 translate-x-48"></div>
+            </div>
+            
+            <div class="relative z-10 p-12 md:p-16">
+                <div class="max-w-6xl mx-auto text-center">
+                    <!-- Main Title -->
+                    <div class="mb-8">
+                        <h1 class="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
+                            <span class="text-white font-black tracking-wide" style="text-shadow: 0 0 20px rgba(59, 130, 246, 0.8), 0 0 40px rgba(59, 130, 246, 0.6), 0 0 60px rgba(59, 130, 246, 0.4), 0 0 80px rgba(59, 130, 246, 0.2);">
+                                AzurEye
+                            </span>
+                        </h1>
+                        <h2 class="text-2xl md:text-3xl font-light text-gray-300 mb-4">
+                            Azure Security Assessment Platform
+                        </h2>
+                        <div class="w-24 h-1 bg-gradient-to-r from-blue-500 to-cyan-400 mx-auto rounded-full"></div>
+                    </div>
+                    
+                    <!-- Description -->
+                    <div class="max-w-4xl mx-auto mb-12">
+                        <p class="text-xl md:text-2xl text-gray-300 leading-relaxed font-light">
+                            Comprehensive security assessment and vulnerability detection for Azure environments. 
+                            <span class="text-blue-300 font-medium">Open-source</span>, 
+                            <span class="text-green-300 font-medium">actionable</span>, and 
+                            <span class="text-purple-300 font-medium">continuously evolving</span>.
+                        </p>
+                    </div>
+                    
+                    <!-- Key Features Grid -->
+                    <div class="grid md:grid-cols-3 gap-8 md:gap-12">
+                        <div class="text-center group">
+                            <div class="w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                                <i class="fas fa-shield-alt text-white text-3xl"></i>
+                            </div>
+                            <h3 class="text-xl font-semibold text-white mb-3">Comprehensive Scanning</h3>
+                            <p class="text-gray-400 leading-relaxed">Multi-service security assessment across Azure resources with detailed vulnerability analysis</p>
+                        </div>
+                        
+                        <div class="text-center group">
+                            <div class="w-20 h-20 bg-gradient-to-br from-green-600 to-green-500 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                                <i class="fas fa-chart-line text-white text-3xl"></i>
+                            </div>
+                            <h3 class="text-xl font-semibold text-white mb-3">Actionable Reports</h3>
+                            <p class="text-gray-400 leading-relaxed">Detailed findings with remediation guidance and exportable security reports</p>
+                        </div>
+                        
+                        <div class="text-center group">
+                            <div class="w-20 h-20 bg-gradient-to-br from-purple-600 to-purple-500 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                                <i class="fas fa-cogs text-white text-3xl"></i>
+                            </div>
+                            <h3 class="text-xl font-semibold text-white mb-3">Live Progress Tracking</h3>
+                            <p class="text-gray-400 leading-relaxed">Monitor scan progress with detailed analytics and comprehensive reporting</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Assessment Modules -->
+        <div class="mb-10">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-white mb-3 animate-fade-in">
+                    <i class="fas fa-bolt text-blue-400 mr-3"></i>Quick Scan Modules
+                </h2>
+                <p class="text-gray-400 text-base md:text-lg max-w-2xl mx-auto">Choose a service to run focused security checks with clear, actionable results.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
+                <!-- Function App -->
+                <a href="/function_app" class="group bg-gray-700 rounded-lg p-5 border border-gray-600 hover:border-green-600 transition-colors">
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-green-600 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-green-500 transition-colors duration-300">
+                            <i class="fas fa-code text-white text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2">Function Apps</h3>
+                        <p class="text-gray-400 text-sm mb-3">Serverless Functions Security Assessment</p>
+                        <div class="flex items-center justify-center text-green-400 group-hover:text-green-300 transition-colors">
+                            <span class="text-sm font-medium">Start Assessment</span>
+                            <i class="fas fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Logic App Standard -->
+                <a href="/logic_app_standard" class="group bg-gray-700 rounded-lg p-5 border border-gray-600 hover:border-purple-600 transition-colors">
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-purple-600 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-purple-500 transition-colors duration-300">
+                            <i class="fas fa-project-diagram text-white text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2">Logic Apps (Standard)</h3>
+                        <p class="text-gray-400 text-sm mb-3">Workflow Automation Security Assessment</p>
+                        <div class="flex items-center justify-center text-purple-400 group-hover:text-purple-300 transition-colors">
+                            <span class="text-sm font-medium">Start Assessment</span>
+                            <i class="fas fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Logic App Consumption -->
+                <a href="/logic_app_consumption" class="group bg-gray-700 rounded-lg p-5 border border-gray-600 hover:border-indigo-600 transition-colors">
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-indigo-500 transition-colors duration-300">
+                            <i class="fas fa-sitemap text-white text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2">Logic Apps (Consumption)</h3>
+                        <p class="text-gray-400 text-sm mb-3">Pay-per-Use Workflows Security Assessment</p>
+                        <div class="flex items-center justify-center text-indigo-400 group-hover:text-indigo-300 transition-colors">
+                            <span class="text-sm font-medium">Start Assessment</span>
+                            <i class="fas fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Key Vaults -->
+                <a href="/key_vaults" class="group bg-gray-700 rounded-lg p-5 border border-gray-600 hover:border-yellow-600 transition-colors">
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-yellow-600 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-yellow-500 transition-colors duration-300">
+                            <i class="fas fa-key text-white text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2">Key Vaults</h3>
+                        <p class="text-gray-400 text-sm mb-3">Secrets & Certificates Security Assessment</p>
+                        <div class="flex items-center justify-center text-yellow-400 group-hover:text-yellow-300 transition-colors">
+                            <span class="text-sm font-medium">Start Assessment</span>
+                            <i class="fas fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Storage Accounts -->
+                <a href="/storage_accounts" class="group bg-gray-700 rounded-lg p-5 border border-gray-600 hover:border-blue-600 transition-colors">
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-500 transition-colors duration-300">
+                            <i class="fas fa-database text-white text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2">Storage Accounts</h3>
+                        <p class="text-gray-400 text-sm mb-3">Blob & File Storage Security Assessment</p>
+                        <div class="flex items-center justify-center text-blue-400 group-hover:text-blue-300 transition-colors">
+                            <span class="text-sm font-medium">Start Assessment</span>
+                            <i class="fas fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Automation Accounts -->
+                <a href="/automation" class="group bg-gray-700 rounded-lg p-5 border border-gray-600 hover:border-orange-600 transition-colors">
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-orange-600 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-orange-500 transition-colors duration-300">
+                            <i class="fas fa-robot text-white text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2">Automation Accounts</h3>
+                        <p class="text-gray-400 text-sm mb-3">Runbooks & Scripts Security Assessment</p>
+                        <div class="flex items-center justify-center text-orange-400 group-hover:text-orange-300 transition-colors">
+                            <span class="text-sm font-medium">Start Assessment</span>
+                            <i class="fas fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="bg-gray-700 rounded-xl p-6 border-l-4 border-cyan-600 mb-8 shadow-xl">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-2xl font-bold text-white animate-fade-in">
+                    <i class="fas fa-chart-bar text-cyan-400 mr-3"></i>System Overview
+                </h3>
+                <a href="/dashboard" class="text-cyan-400 hover:text-cyan-300 transition-colors flex items-center">
+                    <span class="mr-2">View Dashboard</span>
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+            <div id="stats-overview" class="text-gray-300 text-lg">
+                <div class="flex items-center justify-center py-8">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400 mr-3"></div>
+                    Loading system statistics...
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="bg-gray-700 rounded-xl p-6 border-l-4 border-blue-600 shadow-xl">
+            <div class="flex justify-between items-center mb-8">
+                <h3 class="text-2xl font-bold text-white flex items-center animate-fade-in">
+                    <i class="fas fa-clock mr-3 text-blue-400"></i>Recent Activity
+                </h3>
+                <a href="/scan_history" class="text-blue-400 hover:text-blue-300 transition-colors flex items-center">
+                    <span class="mr-2">View All History</span>
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+            
+            {% if recent_stats %}
+            <!-- Quick Stats for Recent Activity -->
+            <div class="grid grid-cols-3 gap-4 mb-8">
+                <div class="bg-gray-600 rounded-lg p-4 border-l-4 border-blue-600">
+                    <div class="flex items-center">
+                        <i class="fas fa-search text-blue-400 text-2xl mr-3"></i>
+                        <div>
+                            <p class="text-gray-400 text-sm">Recent Scans</p>
+                            <p class="text-2xl font-bold text-white">{{ recent_stats.total_scans }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-600 rounded-lg p-4 border-l-4 border-red-600">
+                    <div class="flex items-center">
+                        <i class="fas fa-exclamation-triangle text-red-400 text-2xl mr-3"></i>
+                        <div>
+                            <p class="text-gray-400 text-sm">With Issues</p>
+                            <p class="text-2xl font-bold text-white">{{ recent_stats.scans_with_findings }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-600 rounded-lg p-4 border-l-4 border-yellow-600">
+                    <div class="flex items-center">
+                        <i class="fas fa-bug text-yellow-400 text-2xl mr-3"></i>
+                        <div>
+                            <p class="text-gray-400 text-sm">Total Findings</p>
+                            <p class="text-2xl font-bold text-white">{{ recent_stats.total_findings }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if recent_scans %}
+                <div class="space-y-3">
+                    {% for scan in recent_scans %}
+                        <div class="bg-gray-600 rounded-lg p-4 hover:bg-gray-500 transition-all duration-300 cursor-pointer border-l-4 border-gray-500 hover:border-gray-400"
+                             onclick="viewRecentScanDetails('{{ scan.service_name }}', '{{ scan.service_type }}', '{{ scan.subscription_id }}')">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <!-- Service Icon -->
+                                    {% if scan.service_type == 'Key Vault' %}
+                                        <i class="fas fa-key text-yellow-400 text-2xl"></i>
+                                    {% elif scan.service_type == 'Storage Account' %}
+                                        <i class="fas fa-database text-blue-400 text-2xl"></i>
+                                    {% elif 'Logic App' in scan.service_type %}
+                                        <i class="fas fa-project-diagram text-purple-400 text-2xl"></i>
+                                    {% elif scan.service_type == 'Function App' %}
+                                        <i class="fas fa-code text-green-400 text-2xl"></i>
+                                    {% elif scan.service_type == 'Automation Account' %}
+                                        <i class="fas fa-robot text-orange-400 text-2xl"></i>
+                                    {% else %}
+                                        <i class="fas fa-cog text-gray-400 text-2xl"></i>
+                                    {% endif %}
+                                    
+                                    <!-- Scan Info -->
+                                    <div>
+                                        <div class="text-white font-medium">{{ scan.service_name }}</div>
+                                        <div class="text-gray-400 text-sm">{{ scan.service_type }}</div>
+                                    </div>
+                                </div>
+                                
+                                    <!-- Status and Time -->
+                                    <div class="text-right">
+                                        {% if scan.has_findings %}
+                                            <div class="flex items-center justify-end text-red-400 text-sm mb-2">
+                                                <div class="w-2 h-2 bg-red-400 rounded-full mr-2"></div>
+                                                {{ scan.findings_count }} issues found
+                                            </div>
+                                        {% else %}
+                                            <div class="flex items-center justify-end text-green-400 text-sm mb-2">
+                                                <div class="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                                                No issues found
+                                            </div>
+                                        {% endif %}
+                                        <div class="text-slate-400 text-xs">{{ scan.timestamp[:16] }}</div>
+                                    </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-12">
+                    <div class="w-20 h-20 bg-gray-600 rounded-2xl flex items-center justify-center mx-auto mb-6 border-l-4 border-blue-600">
+                        <i class="fas fa-search text-blue-400 text-2xl"></i>
+                    </div>
+                    <h4 class="text-white text-lg font-semibold mb-2">No Recent Activity</h4>
+                    <p class="text-gray-400 mb-6">Start scanning your Azure resources to see activity here</p>
+                    <a href="/dashboard" class="inline-flex items-center bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-play mr-2"></i>
+                        Start First Scan
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Modal for Recent Scan Details -->
+    <div id="recent-scan-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold text-gray-300">Recent Scan Details</h3>
+                        <button onclick="closeRecentScanDetails()" class="text-gray-400 hover:text-white">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    <div id="recent-scan-content" class="text-gray-300">
+                        <!-- Content will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Recent scans data
+        const recentScans = {{ recent_scans | tojson }};
+
+        // Fetch stats asynchronously after the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/fetch_stats')
+                .then(response => response.json())
+                .then(data => {
+                    const statsElement = document.getElementById('stats-overview');
+                    
+                    if (data.status === 'success') {
+                        const stats = data.stats;
+                        statsElement.textContent = 
+                            `Subscriptions: ${stats.subscriptions} | Key Vaults: ${stats.keyvaults} | Storage Accounts: ${stats.storage} | Logic Apps (Standard): ${stats.logicapps} | Logic Apps (Cons.): ${stats.logicapps_consumption} | Function Apps: ${stats.functionapps} | Automation Accounts: ${stats.automationaccounts || 0}`;
+                        statsElement.classList.remove('text-red-500', 'text-yellow-500');
+                        statsElement.classList.add('text-gray-400');
+                    } else {
+                        // Handle different error types
+                        let errorMessage = '';
+                        let errorClass = 'text-red-500';
+                        
+                        switch(data.error_type) {
+                            case 'azure_cli_missing':
+                                errorMessage = '⚠️ Azure CLI not installed. Please install Azure CLI to view resource statistics.';
+                                errorClass = 'text-yellow-500';
+                                break;
+                            case 'azure_not_logged_in':
+                            case 'azure_auth_failed':
+                                errorMessage = '🔐 Not logged in to Azure. Please run "az login" to view resource statistics.';
+                                errorClass = 'text-yellow-500';
+                                break;
+                            case 'no_subscriptions':
+                                errorMessage = '📋 No subscriptions found or access denied. Please check your Azure permissions.';
+                                errorClass = 'text-yellow-500';
+                                break;
+                            default:
+                                errorMessage = '❌ Error loading stats: ' + data.message;
+                                errorClass = 'text-red-500';
+                        }
+                        
+                        statsElement.innerHTML = errorMessage;
+                        statsElement.classList.remove('text-gray-400', 'text-red-500', 'text-yellow-500');
+                        statsElement.classList.add(errorClass);
+                        
+                        // Add installation instructions for Azure CLI
+                        if (data.error_type === 'azure_cli_missing') {
+                            const instructionsDiv = document.createElement('div');
+                            instructionsDiv.className = 'mt-2 text-sm text-gray-500';
+                            instructionsDiv.innerHTML = `
+                                <p class="mb-1">To install Azure CLI:</p>
+                                <ul class="list-disc list-inside ml-4 space-y-1">
+                                    <li><strong>macOS:</strong> <code class="bg-gray-800 px-1 rounded">brew install azure-cli</code></li>
+                                    <li><strong>Windows:</strong> <code class="bg-gray-800 px-1 rounded">winget install Microsoft.AzureCLI</code></li>
+                                    <li><strong>Linux:</strong> <code class="bg-gray-800 px-1 rounded">curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash</code></li>
+                                </ul>
+                            `;
+                            statsElement.parentNode.appendChild(instructionsDiv);
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching stats:', error);
+                    const statsElement = document.getElementById('stats-overview');
+                    statsElement.textContent = '❌ Error loading stats. Please check your connection.';
+                    statsElement.classList.remove('text-gray-400', 'text-yellow-500');
+                    statsElement.classList.add('text-red-500');
+                });
+        });
+
+        // Recent scan details functions
+        function viewRecentScanDetails(serviceName, serviceType, subscriptionId) {
+            const scan = recentScans.find(s => s.service_name === serviceName && s.service_type === serviceType && s.subscription_id === subscriptionId);
+            if (!scan) return;
+
+            const modal = document.getElementById('recent-scan-modal');
+            const content = document.getElementById('recent-scan-content');
+            
+            let findingsHtml = '';
+            if (scan.detailed_data && scan.detailed_data.findings_json) {
+                try {
+                    const findings = JSON.parse(scan.detailed_data.findings_json);
+                    findingsHtml = findings.map(finding => `<li class="text-gray-300 mb-1">• ${finding}</li>`).join('');
+                } catch (e) {
+                    findingsHtml = '<li class="text-gray-400">No detailed findings available</li>';
+                }
+            } else {
+                findingsHtml = '<li class="text-gray-400">No detailed findings available</li>';
+            }
+
+            const serviceIcon = getServiceIconForRecent(serviceType);
+
+            content.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="text-lg font-semibold text-cyan-400 mb-3">Scan Information</h4>
+                        <div class="space-y-2">
+                            <p><span class="text-gray-400">Service Name:</span> <span class="text-white">${scan.service_name}</span></p>
+                            <p><span class="text-gray-400">Service Type:</span> <span class="text-white">${scan.service_type}</span></p>
+                            <p><span class="text-gray-400">Subscription:</span> <span class="text-white font-mono text-sm">${scan.subscription_id}</span></p>
+                            <p><span class="text-gray-400">Scan Date:</span> <span class="text-white">${scan.timestamp}</span></p>
+                            <p><span class="text-gray-400">Status:</span> <span class="${scan.has_findings ? 'text-red-400' : 'text-green-400'}">${scan.has_findings ? 'Issues Found' : 'Clean'}</span></p>
+                            <p><span class="text-gray-400">Findings Count:</span> <span class="text-white">${scan.findings_count}</span></p>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-semibold text-cyan-400 mb-3">Detailed Findings</h4>
+                        <div class="bg-gray-700 rounded p-4 max-h-64 overflow-y-auto">
+                            <ul class="space-y-1">${findingsHtml}</ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button onclick="closeRecentScanDetails()" class="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded transition-colors">
+                        Close
+                    </button>
+                    <button onclick="goToScanHistory()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition-colors">
+                        <i class="fas fa-history mr-2"></i>View Full History
+                    </button>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+        }
+
+        function closeRecentScanDetails() {
+            document.getElementById('recent-scan-modal').classList.add('hidden');
+        }
+
+        function goToScanHistory() {
+            window.location.href = '/scan_history';
+        }
+
+        function getServiceIconForRecent(serviceType) {
+            const icons = {
+                'Key Vault': 'fas fa-key text-yellow-400',
+                'Storage Account': 'fas fa-database text-blue-400',
+                'Logic App Standard': 'fas fa-project-diagram text-purple-400',
+                'Logic App Consumption': 'fas fa-project-diagram text-purple-400',
+                'Function App': 'fas fa-code text-green-400',
+                'Automation Account': 'fas fa-robot text-orange-400'
+            };
+            return icons[serviceType] || 'fas fa-cog text-gray-400';
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('recent-scan-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeRecentScanDetails();
+            }
+        });
+    </script>
+{% endblock %}

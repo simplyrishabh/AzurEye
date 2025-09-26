@@ -1,0 +1,407 @@
+{% extends "base.html" %}
+{% block title %}Scan History{% endblock %}
+{% block content %}
+    <h1 class="text-3xl font-bold text-gray-300 mb-6 animate-fade-in"><i class="fas fa-history mr-2 text-cyan-400"></i> Scan History</h1>
+
+    <!-- Summary Statistics -->
+    {% if stats %}
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-gray-700 rounded-lg p-4 border-l-4 border-blue-600">
+            <div class="flex items-center">
+                <i class="fas fa-search text-blue-400 text-2xl mr-3"></i>
+                <div>
+                    <p class="text-gray-400 text-sm">Total Scans</p>
+                    <p class="text-2xl font-bold text-white">{{ stats.total_scans }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-gray-700 rounded-lg p-4 border-l-4 border-red-600">
+            <div class="flex items-center">
+                <i class="fas fa-exclamation-triangle text-red-400 text-2xl mr-3"></i>
+                <div>
+                    <p class="text-gray-400 text-sm">Scans with Issues</p>
+                    <p class="text-2xl font-bold text-white">{{ stats.scans_with_findings }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-gray-700 rounded-lg p-4 border-l-4 border-yellow-600">
+            <div class="flex items-center">
+                <i class="fas fa-bug text-yellow-400 text-2xl mr-3"></i>
+                <div>
+                    <p class="text-gray-400 text-sm">Total Findings</p>
+                    <p class="text-2xl font-bold text-white">{{ stats.total_findings }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-gray-700 rounded-lg p-4 border-l-4 border-green-600">
+            <div class="flex items-center">
+                <i class="fas fa-shield-alt text-green-400 text-2xl mr-3"></i>
+                <div>
+                    <p class="text-gray-400 text-sm">Clean Scans</p>
+                    <p class="text-2xl font-bold text-white">{{ stats.total_scans - stats.scans_with_findings }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Service Type Statistics -->
+    {% if stats and stats.service_stats %}
+    <div class="bg-gray-700 rounded-lg p-4 mb-6">
+        <h3 class="text-lg font-semibold text-gray-300 mb-4"><i class="fas fa-chart-pie mr-2"></i>Scan Statistics by Service Type</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for service_type, data in stats.service_stats.items() %}
+            <div class="bg-gray-600 rounded p-3">
+                <h4 class="text-cyan-400 font-semibold">{{ service_type }}</h4>
+                <p class="text-gray-300 text-sm">Total: {{ data.total }} | Issues: {{ data.with_findings }} | Findings: {{ data.findings_count }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Filters and Search -->
+    <div class="mb-6 flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
+        <div class="flex-1">
+            <label for="search-input" class="text-gray-400 mr-2">Search:</label>
+            <input type="text" id="search-input" placeholder="Search by service name, subscription, or findings..." 
+                   class="bg-gray-600 text-white px-3 py-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-cyan-400">
+        </div>
+        <div>
+            <label for="service-type-filter" class="text-gray-400 mr-2">Service Type:</label>
+            <select id="service-type-filter" class="bg-gray-600 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-cyan-400">
+                <option value="">All Services</option>
+                <option value="Key Vault">Key Vault</option>
+                <option value="Storage Account">Storage Account</option>
+                <option value="Logic App Standard">Logic App Standard</option>
+                <option value="Logic App Consumption">Logic App Consumption</option>
+                <option value="Function App">Function App</option>
+                <option value="Automation Account">Automation Account</option>
+            </select>
+        </div>
+        <div>
+            <label for="findings-filter" class="text-gray-400 mr-2">Findings:</label>
+            <select id="findings-filter" class="bg-gray-600 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-cyan-400">
+                <option value="">All</option>
+                <option value="with-findings">With Issues</option>
+                <option value="no-findings">Clean</option>
+            </select>
+        </div>
+        <div>
+            <label for="sort-by" class="text-gray-400 mr-2">Sort by:</label>
+            <select id="sort-by" class="bg-gray-600 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-cyan-400">
+                <option value="timestamp-desc">Date (Newest First)</option>
+                <option value="timestamp-asc">Date (Oldest First)</option>
+                <option value="findings-desc">Findings (Most First)</option>
+                <option value="findings-asc">Findings (Least First)</option>
+                <option value="service-name">Service Name (A-Z)</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Scan History Table -->
+    <div class="bg-gray-700 rounded-lg shadow-lg p-6 border-l-4 border-blue-600 hover:shadow-xl transition-shadow duration-200">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-gray-300">Scan History</h3>
+            <div class="text-sm text-gray-400">
+                Showing <span id="showing-count">{{ scans|length }}</span> of {{ scans|length }} scans
+            </div>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="bg-blue-600 text-white">
+                        <th class="p-4">Date & Time</th>
+                        <th class="p-4">Service</th>
+                        <th class="p-4">Resource Name</th>
+                        <th class="p-4">Subscription</th>
+                        <th class="p-4">Findings</th>
+                        <th class="p-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="scan-history-table">
+                    {% for scan in scans %}
+                        <tr class="border-b border-gray-600 hover:bg-gray-600 transition-colors">
+                            <td class="p-4">
+                                <div class="text-gray-300 font-medium">{{ scan.timestamp[:10] }}</div>
+                                <div class="text-gray-400 text-sm">{{ scan.timestamp[11:19] }}</div>
+                            </td>
+                            <td class="p-4">
+                                <div class="flex items-center">
+                                    {% if scan.service_type == 'Key Vault' %}
+                                        <i class="fas fa-key text-yellow-400 mr-2"></i>
+                                    {% elif scan.service_type == 'Storage Account' %}
+                                        <i class="fas fa-database text-blue-400 mr-2"></i>
+                                    {% elif 'Logic App' in scan.service_type %}
+                                        <i class="fas fa-project-diagram text-purple-400 mr-2"></i>
+                                    {% elif scan.service_type == 'Function App' %}
+                                        <i class="fas fa-code text-green-400 mr-2"></i>
+                                    {% elif scan.service_type == 'Automation Account' %}
+                                        <i class="fas fa-robot text-orange-400 mr-2"></i>
+                                    {% else %}
+                                        <i class="fas fa-cog text-gray-400 mr-2"></i>
+                                    {% endif %}
+                                    <span class="text-gray-300">{{ scan.service_type }}</span>
+                                </div>
+                            </td>
+                            <td class="p-4">
+                                <div class="text-gray-300 font-medium">{{ scan.service_name }}</div>
+                                {% if scan.detailed_data and scan.detailed_data.resource_group %}
+                                    <div class="text-gray-400 text-sm">RG: {{ scan.detailed_data.resource_group }}</div>
+                                {% endif %}
+                            </td>
+                            <td class="p-4">
+                                <div class="text-gray-300 font-mono text-sm">{{ scan.subscription_id[:8] }}...</div>
+                            </td>
+                            <td class="p-4">
+                                {% if scan.has_findings %}
+                                    <div class="flex items-center">
+                                        <i class="fas fa-exclamation-triangle text-red-400 mr-2"></i>
+                                        <span class="text-red-400 font-medium">{{ scan.findings_count }} issues</span>
+                                    </div>
+                                {% else %}
+                                    <div class="flex items-center">
+                                        <i class="fas fa-check-circle text-green-400 mr-2"></i>
+                                        <span class="text-green-400">Clean</span>
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td class="p-4">
+                                <div class="flex space-x-2">
+                                    <button onclick="viewScanDetails('{{ scan.service_name }}', '{{ scan.service_type }}', '{{ scan.subscription_id }}')" 
+                                            class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                                        <i class="fas fa-eye mr-1"></i>View
+                                    </button>
+                                    <button onclick="rescanService('{{ scan.service_name }}', '{{ scan.service_type }}', '{{ scan.subscription_id }}')" 
+                                            class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                                        <i class="fas fa-redo mr-1"></i>Re-scan
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if not scans %}
+            <div class="text-center py-8">
+                <i class="fas fa-search text-gray-500 text-4xl mb-4"></i>
+                <p class="text-gray-400 text-lg">No scan history available</p>
+                <p class="text-gray-500 text-sm mt-2">Start scanning your Azure resources to see your history here!</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Modal for Scan Details -->
+    <div id="scan-details-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold text-gray-300">Scan Details</h3>
+                        <button onclick="closeScanDetails()" class="text-gray-400 hover:text-white">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    <div id="scan-details-content" class="text-gray-300">
+                        <!-- Content will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced filter and sort functionality
+        const scans = {{ scans | tojson }};
+        let filteredScans = [...scans];
+
+        function getServiceIcon(serviceType) {
+            const icons = {
+                'Key Vault': 'fas fa-key text-yellow-400',
+                'Storage Account': 'fas fa-database text-blue-400',
+                'Logic App Standard': 'fas fa-project-diagram text-purple-400',
+                'Logic App Consumption': 'fas fa-project-diagram text-purple-400',
+                'Function App': 'fas fa-code text-green-400',
+                'Automation Account': 'fas fa-robot text-orange-400'
+            };
+            return icons[serviceType] || 'fas fa-cog text-gray-400';
+        }
+
+        function renderTable(scansToRender) {
+            const tbody = document.getElementById('scan-history-table');
+            const showingCount = document.getElementById('showing-count');
+            
+            tbody.innerHTML = '';
+            showingCount.textContent = scansToRender.length;
+            
+            if (scansToRender.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-gray-400 text-center"><i class="fas fa-search text-2xl mb-2"></i><br>No scans match your criteria.</td></tr>';
+                return;
+            }
+            
+            scansToRender.forEach(scan => {
+                const row = document.createElement('tr');
+                row.classList.add('border-b', 'border-gray-600', 'hover:bg-gray-600', 'transition-colors');
+                
+                const serviceIcon = getServiceIcon(scan.service_type);
+                const findingsDisplay = scan.has_findings ? 
+                    `<div class="flex items-center"><i class="fas fa-exclamation-triangle text-red-400 mr-2"></i><span class="text-red-400 font-medium">${scan.findings_count} issues</span></div>` :
+                    `<div class="flex items-center"><i class="fas fa-check-circle text-green-400 mr-2"></i><span class="text-green-400">Clean</span></div>`;
+                
+                const resourceGroup = scan.detailed_data && scan.detailed_data.resource_group ? 
+                    `<div class="text-gray-400 text-sm">RG: ${scan.detailed_data.resource_group}</div>` : '';
+                
+                row.innerHTML = `
+                    <td class="p-4">
+                        <div class="text-gray-300 font-medium">${scan.timestamp.substring(0, 10)}</div>
+                        <div class="text-gray-400 text-sm">${scan.timestamp.substring(11, 19)}</div>
+                    </td>
+                    <td class="p-4">
+                        <div class="flex items-center">
+                            <i class="${serviceIcon} mr-2"></i>
+                            <span class="text-gray-300">${scan.service_type}</span>
+                        </div>
+                    </td>
+                    <td class="p-4">
+                        <div class="text-gray-300 font-medium">${scan.service_name}</div>
+                        ${resourceGroup}
+                    </td>
+                    <td class="p-4">
+                        <div class="text-gray-300 font-mono text-sm">${scan.subscription_id.substring(0, 8)}...</div>
+                    </td>
+                    <td class="p-4">${findingsDisplay}</td>
+                    <td class="p-4">
+                        <div class="flex space-x-2">
+                            <button onclick="viewScanDetails('${scan.service_name}', '${scan.service_type}', '${scan.subscription_id}')" 
+                                    class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                                <i class="fas fa-eye mr-1"></i>View
+                            </button>
+                            <button onclick="rescanService('${scan.service_name}', '${scan.service_type}', '${scan.subscription_id}')" 
+                                    class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                                <i class="fas fa-redo mr-1"></i>Re-scan
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function filterAndSort() {
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            const serviceType = document.getElementById('service-type-filter').value;
+            const findingsFilter = document.getElementById('findings-filter').value;
+            const sortBy = document.getElementById('sort-by').value;
+
+            filteredScans = scans.filter(scan => {
+                const matchesSearch = !searchTerm || 
+                    scan.service_name.toLowerCase().includes(searchTerm) ||
+                    scan.subscription_id.toLowerCase().includes(searchTerm) ||
+                    scan.service_type.toLowerCase().includes(searchTerm);
+                
+                const matchesServiceType = !serviceType || scan.service_type === serviceType;
+                
+                const matchesFindings = !findingsFilter || 
+                    (findingsFilter === 'with-findings' && scan.has_findings) ||
+                    (findingsFilter === 'no-findings' && !scan.has_findings);
+                
+                return matchesSearch && matchesServiceType && matchesFindings;
+            });
+
+            filteredScans = sortScans(filteredScans, sortBy);
+            renderTable(filteredScans);
+        }
+
+        function sortScans(scans, sortBy) {
+            return scans.sort((a, b) => {
+                switch (sortBy) {
+                    case 'timestamp-desc':
+                        return new Date(b.timestamp) - new Date(a.timestamp);
+                    case 'timestamp-asc':
+                        return new Date(a.timestamp) - new Date(b.timestamp);
+                    case 'findings-desc':
+                        return b.findings_count - a.findings_count;
+                    case 'findings-asc':
+                        return a.findings_count - b.findings_count;
+                    case 'service-name':
+                        return a.service_name.localeCompare(b.service_name);
+                    default:
+                        return 0;
+                }
+            });
+        }
+
+        // Action functions
+        function viewScanDetails(serviceName, serviceType, subscriptionId) {
+            const scan = scans.find(s => s.service_name === serviceName && s.service_type === serviceType && s.subscription_id === subscriptionId);
+            if (!scan) return;
+
+            const modal = document.getElementById('scan-details-modal');
+            const content = document.getElementById('scan-details-content');
+            
+            let findingsHtml = '';
+            if (scan.detailed_data && scan.detailed_data.findings_json) {
+                try {
+                    const findings = JSON.parse(scan.detailed_data.findings_json);
+                    findingsHtml = findings.map(finding => `<li class="text-gray-300 mb-1">• ${finding}</li>`).join('');
+                } catch (e) {
+                    findingsHtml = '<li class="text-gray-400">No detailed findings available</li>';
+                }
+            } else {
+                findingsHtml = '<li class="text-gray-400">No detailed findings available</li>';
+            }
+
+            content.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="text-lg font-semibold text-cyan-400 mb-3">Basic Information</h4>
+                        <div class="space-y-2">
+                            <p><span class="text-gray-400">Service Name:</span> <span class="text-white">${scan.service_name}</span></p>
+                            <p><span class="text-gray-400">Service Type:</span> <span class="text-white">${scan.service_type}</span></p>
+                            <p><span class="text-gray-400">Subscription:</span> <span class="text-white font-mono text-sm">${scan.subscription_id}</span></p>
+                            <p><span class="text-gray-400">Scan Date:</span> <span class="text-white">${scan.timestamp}</span></p>
+                            <p><span class="text-gray-400">Status:</span> <span class="${scan.has_findings ? 'text-red-400' : 'text-green-400'}">${scan.has_findings ? 'Issues Found' : 'Clean'}</span></p>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-semibold text-cyan-400 mb-3">Detailed Findings</h4>
+                        <div class="bg-gray-700 rounded p-4 max-h-64 overflow-y-auto">
+                            <ul class="space-y-1">${findingsHtml}</ul>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+        }
+
+        function closeScanDetails() {
+            document.getElementById('scan-details-modal').classList.add('hidden');
+        }
+
+        function rescanService(serviceName, serviceType, subscriptionId) {
+            // This would trigger a re-scan of the specific service
+            showToast(`Re-scanning ${serviceName}...`, 'info');
+            // TODO: Implement actual re-scan functionality
+        }
+
+        // Event listeners
+        document.getElementById('search-input').addEventListener('input', filterAndSort);
+        document.getElementById('service-type-filter').addEventListener('change', filterAndSort);
+        document.getElementById('findings-filter').addEventListener('change', filterAndSort);
+        document.getElementById('sort-by').addEventListener('change', filterAndSort);
+
+        // Close modal when clicking outside
+        document.getElementById('scan-details-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeScanDetails();
+            }
+        });
+
+        // Initial render
+        renderTable(scans);
+    </script>
+{% endblock %}
