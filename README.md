@@ -31,13 +31,6 @@ AzurEye is a Flask-based web application that performs automated security assess
 - Azure CLI 2.0 or higher
 - Internet connection for Azure API calls
 
-### Azure CLI Extensions
-```bash
-# Install required Azure CLI extensions
-az extension add --name logic
-az extension add --name automation
-```
-
 ### Azure Authentication
 ```bash
 # Login to Azure
@@ -49,23 +42,31 @@ az account show
 
 ## 🛠️ Installation
 
-### 1. Clone the Repository
+### Option 1: Automated Installation (Recommended)
 ```bash
+# Clone the repository
 git clone https://github.com/simplyrishabh/AzurEye.git
 cd AzurEye
+
+# Run the automated installation script
+./install.sh
 ```
 
-### 2. Install Python Dependencies
+### Option 2: Manual Installation
 ```bash
+# 1. Clone the repository
+git clone https://github.com/simplyrishabh/AzurEye.git
+cd AzurEye
+
+# 2. Install Python dependencies
 pip install flask
-```
 
-### 3. Verify Azure CLI Setup
-```bash
-# Check Azure CLI version
+# 3. Install Azure CLI extensions
+az extension add --name logic
+az extension add --name automation
+
+# 4. Verify Azure CLI setup
 az --version
-
-# Verify you're logged in
 az account show
 ```
 
